@@ -1,0 +1,45 @@
+{
+  "name": "pronunciation-scoring-assessment",
+  "version": "1.0.0",
+  "description": "Production-grade pronunciation scoring app for English speech practice.",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/imranrkhan13/livo-assessment.git"
+  },
+  "keywords": [
+    "pronunciation",
+    "speech-to-text",
+    "nextjs",
+    "dpdp"
+  ],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/imranrkhan13/livo-assessment/issues"
+  },
+  "homepage": "https://github.com/imranrkhan13/livo-assessment#readme",
+  "dependencies": {
+    "cmu-pronouncing-dictionary": "^3.0.0",
+    "music-metadata": "^11.13.0",
+    "next": "^16.2.10",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.2",
+    "@types/node": "^26.1.0",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "eslint": "^9.39.4",
+    "eslint-config-next": "^16.2.10",
+    "tailwindcss": "^4.3.2",
+    "typescript": "^6.0.3"
+  }
+}
