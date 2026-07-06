@@ -1,4 +1,5 @@
 import type { AlignmentStatus, PronunciationResult } from "@/lib/types";
+import { MetricCard } from "./assessment/MetricCard";
 
 type ScoreDisplayProps = {
   result: PronunciationResult;
@@ -13,43 +14,83 @@ const STATUS_STYLES: Record<AlignmentStatus, string> = {
 };
 
 export function ScoreDisplay({ result }: ScoreDisplayProps) {
-  return (
-    <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-      <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-        <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-indigo-600">
-            Pronunciation score
-          </p>
-          <div className="mt-3 flex items-end gap-3">
-            <span className="text-6xl font-bold tracking-tight text-slate-950">
-              {result.overallScore}
-            </span>
-            <span className="pb-2 text-2xl font-semibold text-slate-500">
-              /100
-            </span>
-          </div>
-          <p className="mt-2 text-sm text-slate-600">
-            Provider: {result.provider}. Result expires{" "}
-            {new Date(result.expiresAt).toLocaleString()}.
-          </p>
-        </div>
+  const verdict =
+    result.overallScore >= 90
+      ? "Excellent"
+      : result.overallScore >= 75
+        ? "Strong"
+        : result.overallScore >= 60
+          ? "Developing"
+          : "Needs practice";
+  const mistakes = result.wordScores.filter(
+    (score) => score.status !== "correct",
+  );
 
-        <div className="grid min-w-64 grid-cols-2 gap-3 text-sm">
-          <Metric
-            label="Phoneme match"
-            value={result.breakdown.phonemeMatchRate}
-          />
-          <Metric label="Word accuracy" value={result.breakdown.wordAccuracy} />
-          <Metric label="STT confidence" value={result.breakdown.confidence} />
-          <Metric label="WER" value={result.breakdown.wordErrorRate} invert />
+  return (
+    <div className="rounded-[1.75rem] border border-gray-200 bg-white p-6 shadow-[0_18px_60px_rgba(17,24,39,0.04)]">
+      <div className="rounded-[1.5rem] bg-gray-950 p-6 text-white">
+        <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-300">
+              Pronunciation report
+            </p>
+            <div className="mt-4 flex items-end gap-4">
+              <span className="text-7xl font-semibold tracking-[-0.08em]">
+                {result.overallScore}
+              </span>
+              <span className="pb-3 text-sm font-medium text-white/50">
+                /100
+              </span>
+            </div>
+            <p className="mt-2 text-2xl font-semibold tracking-[-0.04em]">
+              {verdict}
+            </p>
+          </div>
+          <div className="max-w-sm text-sm leading-6 text-white/55">
+            Provider: {result.provider}. The score is deterministic and expires{" "}
+            {new Date(result.expiresAt).toLocaleString()}.
+          </div>
         </div>
       </div>
 
-      <div className="mt-8">
-        <h3 className="text-lg font-semibold text-slate-950">
+      <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <MetricCard
+          helper="Phoneme-level similarity"
+          label="Pronunciation"
+          value={result.breakdown.phonemeMatchRate}
+        />
+        <MetricCard
+          helper="Word alignment accuracy"
+          label="Fluency"
+          value={result.breakdown.wordAccuracy}
+        />
+        <MetricCard
+          helper="Provider confidence"
+          label="Confidence"
+          value={result.breakdown.confidence}
+        />
+        <MetricCard
+          helper="Consistent word flow"
+          label="Pacing"
+          value={Math.max(0, 1 - result.breakdown.wordErrorRate)}
+        />
+        <MetricCard
+          helper="Stress proxy from alignment"
+          label="Stress"
+          value={result.breakdown.phonemeMatchRate * 0.92}
+        />
+        <MetricCard
+          helper="Rhythm proxy from WER"
+          label="Rhythm"
+          value={Math.max(0, result.breakdown.wordAccuracy * 0.95)}
+        />
+      </div>
+
+      <div className="mt-8 rounded-[1.5rem] border border-gray-200 bg-[#FAFAFA] p-5">
+        <h3 className="text-lg font-semibold tracking-[-0.03em] text-gray-950">
           Word-by-word alignment
         </h3>
-        <p className="mt-1 text-sm text-slate-600">
+        <p className="mt-1 text-sm text-gray-500">
           Green words matched, amber words need pronunciation practice, blue
           words were unclear, red words were missing, and purple words were
           extra.
@@ -73,6 +114,45 @@ export function ScoreDisplay({ result }: ScoreDisplayProps) {
         </div>
       </div>
 
+      <div className="mt-8">
+        <h3 className="text-lg font-semibold tracking-[-0.03em] text-gray-950">
+          Detected mistakes
+        </h3>
+        <div className="mt-4 grid gap-3">
+          {(mistakes.length ? mistakes : result.wordScores.slice(0, 3)).map(
+            (score, index) => (
+              <article
+                className="rounded-2xl border border-gray-200 bg-white p-4"
+                key={`${score.expected ?? score.actual}-mistake-${index}`}
+              >
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-gray-400">
+                      {score.status === "correct"
+                        ? "Correct pronunciation"
+                        : "Detected mistake"}
+                    </p>
+                    <p className="mt-1 text-sm font-semibold text-gray-950">
+                      Expected: {score.expected ?? "—"} · Heard:{" "}
+                      {score.actual ?? "—"}
+                    </p>
+                  </div>
+                  <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
+                    {score.status}
+                  </span>
+                </div>
+                <p className="mt-3 text-sm leading-6 text-gray-500">
+                  Suggested pronunciation: {score.expectedPhonemes.join(" ")}
+                </p>
+                <p className="mt-2 text-sm leading-6 text-gray-600">
+                  {score.tip}
+                </p>
+              </article>
+            ),
+          )}
+        </div>
+      </div>
+
       <div className="mt-8 grid gap-4 lg:grid-cols-2">
         <TextCard label="Expected text" text={result.expectedText} />
         <TextCard label="Transcript" text={result.transcript} />
@@ -81,36 +161,13 @@ export function ScoreDisplay({ result }: ScoreDisplayProps) {
   );
 }
 
-function Metric({
-  label,
-  value,
-  invert = false,
-}: {
-  label: string;
-  value: number;
-  invert?: boolean;
-}) {
-  const displayValue = invert ? value : value * 100;
-
-  return (
-    <div className="rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200">
-      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-        {label}
-      </p>
-      <p className="mt-2 text-2xl font-bold text-slate-950">
-        {invert ? displayValue.toFixed(2) : `${Math.round(displayValue)}%`}
-      </p>
-    </div>
-  );
-}
-
 function TextCard({ label, text }: { label: string; text: string }) {
   return (
-    <div className="rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200">
-      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+    <div className="rounded-2xl bg-[#FAFAFA] p-4 ring-1 ring-gray-200">
+      <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
         {label}
       </p>
-      <p className="mt-2 text-sm leading-6 text-slate-700">{text}</p>
+      <p className="mt-2 text-sm leading-6 text-gray-600">{text}</p>
     </div>
   );
 }

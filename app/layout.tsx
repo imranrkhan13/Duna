@@ -1,6 +1,13 @@
 import type { Metadata } from "next";
+import { Inter } from "next/font/google";
 
 import "./globals.css";
+
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "Pronunciation Scoring Assessment",
@@ -15,7 +22,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="min-h-screen text-slate-900 antialiased">{children}</body>
+      <body className={`${inter.variable} min-h-screen antialiased`}>
+        {children}
+      </body>
     </html>
   );
 }

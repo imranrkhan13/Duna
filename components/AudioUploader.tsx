@@ -2,6 +2,9 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import { Recorder } from "./assessment/Recorder";
+import { StepCard } from "./assessment/StepCard";
+import { UploadCard } from "./assessment/UploadCard";
 import { ConsentBanner } from "./ConsentBanner";
 import { FeedbackPanel } from "./FeedbackPanel";
 import { ScoreDisplay } from "./ScoreDisplay";
@@ -238,115 +241,96 @@ export function AudioUploader() {
   }
 
   return (
-    <div className="space-y-8">
-      <ConsentBanner accepted={accepted} onAcceptedChange={setAccepted} />
+    <div className="space-y-6">
+      <div className="rounded-[2rem] border border-gray-200 bg-white p-4 shadow-[0_20px_80px_rgba(17,24,39,0.05)]">
+        <div className="grid gap-3 sm:grid-cols-4">
+          {[
+            ["Consent", accepted],
+            ["Passage", wordCount >= 5],
+            ["Audio", Boolean(file)],
+            ["Score", Boolean(result)],
+          ].map(([label, done], index) => (
+            <div
+              className="rounded-2xl bg-[#FAFAFA] p-3 text-sm"
+              key={String(label)}
+            >
+              <div className="flex items-center gap-3">
+                <span
+                  className={`grid h-7 w-7 place-items-center rounded-full text-xs font-semibold ${
+                    done
+                      ? "bg-blue-600 text-white"
+                      : "border border-gray-200 bg-white text-gray-500"
+                  }`}
+                >
+                  {index + 1}
+                </span>
+                <span className="font-medium text-gray-950">{label}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
 
-      <section className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-        <div className="rounded-3xl border border-stone-200 bg-white/90 p-6 shadow-sm">
-          <div className="flex flex-col gap-2">
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-stone-500">
-              Expected passage
-            </p>
-            <label className="text-2xl font-semibold text-stone-950">
-              Text the learner should read
-            </label>
-            <p className="text-sm text-stone-600">
-              Paste the prompt used for the recording. Scores are computed by
-              comparing this text with the STT transcript.
-            </p>
-          </div>
+      <StepCard
+        complete={accepted}
+        description="Required before recording or uploading. Audio is processed temporarily and never persisted by the app."
+        step={1}
+        title="Consent"
+      >
+        <ConsentBanner accepted={accepted} onAcceptedChange={setAccepted} />
+      </StepCard>
+
+      <section className="grid gap-6 lg:grid-cols-[1fr_1fr]">
+        <StepCard
+          complete={wordCount >= 5}
+          description="Paste the learner prompt. The scoring engine compares this text against the real STT transcript."
+          step={2}
+          title="Passage"
+        >
           <textarea
-            className="mt-5 min-h-44 w-full rounded-2xl border border-stone-200 bg-stone-50 p-4 text-base leading-7 text-stone-900 outline-none transition focus:border-stone-400 focus:bg-white focus:ring-4 focus:ring-stone-100"
+            aria-label="Expected passage"
+            className="min-h-56 w-full resize-none rounded-[1.5rem] border border-gray-200 bg-[#FAFAFA] p-5 text-base leading-7 text-gray-950 outline-none transition placeholder:text-gray-400 focus:border-blue-300 focus:bg-white focus:ring-4 focus:ring-blue-100"
             value={expectedText}
             onChange={(event) => setExpectedText(event.target.value)}
           />
-          <p className="mt-3 text-sm text-stone-500">
+          <p className="mt-3 text-sm text-gray-500">
             {wordCount} words. Use a passage that naturally takes 30-45 seconds
             to read.
           </p>
-        </div>
+        </StepCard>
 
-        <div className="rounded-3xl border border-stone-200 bg-white/90 p-6 shadow-sm">
-          <div className="flex flex-col gap-2">
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-stone-500">
-              Audio upload or recording
-            </p>
-            <h2 className="text-2xl font-semibold text-stone-950">
-              30-45 seconds, English speech
-            </h2>
-            <p className="text-sm text-stone-600">
-              Supports common browser audio formats such as MP3, WAV, M4A, OGG,
-              and WebM.
-            </p>
-          </div>
-
-          <div className="mt-5 rounded-3xl border border-stone-200 bg-stone-50 p-4">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <p className="font-semibold text-stone-950">Record yourself</p>
-                <p className="text-sm text-stone-600">
-                  Speak for 30-45 seconds. Recording auto-stops at 45 seconds.
-                </p>
-              </div>
-              {recordingState === "recording" ? (
-                <button
-                  className="rounded-full bg-rose-600 px-5 py-3 text-sm font-semibold text-white"
-                  type="button"
-                  onClick={stopRecording}
-                >
-                  Stop {recordingSeconds}s
-                </button>
-              ) : (
-                <button
-                  className="rounded-full bg-stone-950 px-5 py-3 text-sm font-semibold text-white disabled:bg-stone-400"
-                  disabled={recordingState === "processing"}
-                  type="button"
-                  onClick={() => void startRecording()}
-                >
-                  {recordingState === "processing" ? "Preparing..." : "Start speaking"}
-                </button>
-              )}
-            </div>
-          </div>
-
-          <label
-            className={`mt-5 flex min-h-56 cursor-pointer flex-col items-center justify-center rounded-3xl border-2 border-dashed p-6 text-center transition ${
-              isDragging
-                ? "border-stone-500 bg-stone-100"
-                : "border-stone-300 bg-stone-50 hover:border-stone-500 hover:bg-stone-100"
-            }`}
-            onDragLeave={() => setIsDragging(false)}
-            onDragOver={(event) => {
-              event.preventDefault();
-              setIsDragging(true);
-            }}
-            onDrop={(event) => {
-              event.preventDefault();
-              setIsDragging(false);
-              void handleFile(event.dataTransfer.files[0]);
-            }}
-          >
-            <input
-              accept="audio/*"
-              className="sr-only"
-              type="file"
-              onChange={(event) => void handleFile(event.target.files?.[0])}
+        <StepCard
+          complete={Boolean(file)}
+          description="Record with the browser mic or upload a 30-45 second English audio file."
+          step={3}
+          title="Audio"
+        >
+          <div className="space-y-5">
+            <Recorder
+              seconds={recordingSeconds}
+              state={recordingState}
+              onStart={() => void startRecording()}
+              onStop={stopRecording}
             />
-            <span className="rounded-full bg-stone-200 px-4 py-2 text-sm font-semibold text-stone-800">
-              Drag and drop or browse
-            </span>
-            <span className="mt-4 text-lg font-semibold text-stone-900">
-              {file ? file.name : "Choose an audio file"}
-            </span>
-            <span className="mt-2 text-sm text-stone-500">
-              {duration
-                ? `${duration.toFixed(1)} seconds detected`
-                : "Duration is checked before upload"}
-            </span>
-          </label>
-
+            <UploadCard
+              duration={duration}
+              fileName={file?.name}
+              isDragging={isDragging}
+              onDragLeave={() => setIsDragging(false)}
+              onDragOver={(event) => {
+                event.preventDefault();
+                setIsDragging(true);
+              }}
+              onDrop={(event) => {
+                event.preventDefault();
+                setIsDragging(false);
+                void handleFile(event.dataTransfer.files[0]);
+              }}
+              onFile={(nextFile) => void handleFile(nextFile)}
+            />
+          </div>
           <button
-            className="mt-5 w-full rounded-2xl bg-stone-950 px-5 py-4 text-base font-semibold text-white shadow-sm transition hover:bg-stone-800 disabled:cursor-not-allowed disabled:bg-stone-300"
+            className="mt-5 inline-flex h-11 w-full items-center justify-center rounded-full bg-blue-600 px-5 text-sm font-medium text-white shadow-[0_14px_34px_rgba(37,99,235,0.22)] transition hover:-translate-y-0.5 hover:bg-blue-500 disabled:cursor-not-allowed disabled:bg-gray-300"
             disabled={isSubmitting}
             type="button"
             onClick={() => void submit()}
@@ -354,12 +338,12 @@ export function AudioUploader() {
             {isSubmitting ? "Scoring pronunciation..." : "Score pronunciation"}
           </button>
           <a
-            className="mt-3 block text-center text-sm font-semibold text-stone-700 underline-offset-4 hover:underline"
+            className="mt-3 block text-center text-sm font-medium text-gray-500 underline-offset-4 transition hover:text-blue-600 hover:underline"
             href="/demo"
           >
             Try without uploading: run the bundled live API demo
           </a>
-        </div>
+        </StepCard>
       </section>
 
       {error ? (
@@ -369,10 +353,17 @@ export function AudioUploader() {
       ) : null}
 
       {result ? (
-        <section className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-          <ScoreDisplay result={result} />
-          <FeedbackPanel feedback={result.feedback} />
-        </section>
+        <StepCard
+          complete
+          description="A deterministic report with score breakdown, aligned words, and timeline feedback."
+          step={4}
+          title="Score"
+        >
+          <section className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+            <ScoreDisplay result={result} />
+            <FeedbackPanel feedback={result.feedback} />
+          </section>
+        </StepCard>
       ) : null}
     </div>
   );
