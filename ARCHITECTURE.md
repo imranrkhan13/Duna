@@ -1,138 +1,441 @@
-# Pronunciation Scoring Architecture
+# DUNA Pronunciation Assessment Platform
 
-## Component diagram
+> Deterministic, explainable, and privacy-conscious pronunciation assessment for education and language learning.
+
+---
+
+# What This Is
+
+DUNA helps learners improve their English pronunciation by comparing spoken audio against an expected passage and providing word-level feedback.
+
+Instead of generating subjective AI opinions, DUNA uses deterministic speech alignment and phoneme comparison so every score can be reproduced and explained.
+
+The platform is designed for:
+
+- Language learning platforms
+- Educational institutions
+- English proficiency practice
+- Assessment workflows
+
+---
+
+# What This Is Not
+
+DUNA is **not** a clinical speech pathology tool.
+
+It is designed as an educational pronunciation assessment platform that helps learners identify pronunciation patterns and practice more effectively.
+
+---
+
+# Core Design Principles
+
+The architecture was built around five principles.
+
+## 1. Deterministic Scoring
+
+Speech recognition may use AI.
+
+Pronunciation scoring does not.
+
+The same recording always produces the same score.
+
+---
+
+## 2. Explainability
+
+Every pronunciation decision can be explained.
+
+For every highlighted word the system knows:
+
+- expected word
+- detected word
+- expected phonemes
+- detected phonemes
+- confidence
+- scoring reason
+
+No black-box score exists.
+
+---
+
+## 3. Privacy First
+
+Only information required for pronunciation assessment is processed.
+
+Raw audio is never intentionally stored permanently.
+
+Temporary assessment data is automatically removed after 24 hours.
+
+---
+
+## 4. Provider Independence
+
+Speech recognition providers evolve quickly.
+
+The pronunciation engine is completely independent from the STT provider.
+
+Replacing Gradium with another provider requires no scoring changes.
+
+---
+
+## 5. Auditability
+
+Every assessment includes:
+
+- transcript
+- phoneme alignment
+- score calculation
+- confidence values
+- reasoning
+
+This makes results suitable for educational review and debugging.
+
+---
+
+# High-Level Architecture
 
 ```text
-Frontend (Next.js + Tailwind)
-  -> API Route (/api/upload)
-    -> STT Service (Gradium, fallback Groq/Deepgram/OpenAI)
-      -> Phoneme Comparator (CMUdict + fallback grapheme mapper)
-        -> Scoring Engine (deterministic alignment and scoring)
-          -> JSON Response (score, word highlights, feedback)
+Browser (Next.js)
 
-Demo Frontend (/demo)
-  -> API Route (/api/demo/verify)
-    -> Public WAV fixtures
-    -> Real Gradium/Groq/Deepgram API calls
-    -> Production /api/upload self-checks
-    -> Phoneme Comparator + Scoring Engine
-    -> JSON Report (status, raw responses, latency, issues)
+        │
+
+Upload / Recording
+
+        │
+
+        ▼
+
+API (/api/upload)
+
+        │
+
+Duration Validation
+Consent Validation
+
+        │
+
+        ▼
+
+Speech-to-Text Layer
+
+Gradium
+↓
+
+Groq Whisper
+↓
+
+Deepgram
+↓
+
+OpenAI Whisper
+
+        │
+
+        ▼
+
+Transcript
+
+        │
+
+        ▼
+
+Phoneme Normalization
+
+        │
+
+        ▼
+
+Dynamic Programming Alignment
+
+        │
+
+        ▼
+
+Deterministic Scoring Engine
+
+        │
+
+        ▼
+
+Assessment Report
+
+        │
+
+        ▼
+
+Temporary Result Store
 ```
 
-## Model and API choices
+---
 
-The app prefers **Gradium AI STT** because the assessment requested it and the
-REST endpoint supports one-shot audio uploads with timestamped transcript
-segments. Gradium currently documents segment timestamps for STT, so the app
-derives word anchors evenly inside a segment when word-level timestamps are not
-returned.
+# How It Works
 
-Fallback providers are ordered by practical production fit:
+## Step 1
 
-1. **Groq Whisper** (`whisper-large-v3-turbo`) for fast English transcription
-   and OpenAI-compatible verbose JSON with word/segment timestamp options.
-2. **Deepgram** (`nova-2`) for word timestamps and word confidence values.
-3. **OpenAI Whisper** for broad compatibility.
+The learner records or uploads English speech.
 
-Provider selection is environment-based. The API route tries configured
-providers in order and returns a clear setup error if none are configured.
-Both underscore and prompt-style variable names are supported, for example
-`GRADIUM_API_KEY` and `GRADIUMAPIKEY`.
+---
 
-## Live demo verification
+## Step 2
 
-The `/demo` route is intentionally not a mock. It calls
-`/api/demo/verify`, which reads bundled spoken WAV fixtures from `public/` and
-runs seven checks:
+The application validates:
 
-1. Gradium STT with automatic Groq fallback.
-2. Direct Groq Whisper.
-3. Direct Deepgram, skipped when no key is configured.
-4. Phoneme alignment using the real transcript from test 1.
-5. Deterministic scoring math using the real alignment.
-6. DPDP upload/deletion audit through the production `/api/upload` endpoint.
-7. Duration validation through `/api/upload` with 10s, 35s, and 60s fixtures.
+- file format
+- duration
+- consent
 
-Each card returns real response data, latency, status, and issues. Missing keys
-are shown as skipped or failing configuration states rather than fabricated
-success responses.
+---
 
-## Scoring methodology
+## Step 3
 
-Scores are deterministic and auditable; no LLM generates scores.
+Audio is sent to the configured Speech-to-Text provider.
 
-1. **Normalize and tokenize** the expected prompt and STT transcript into words.
-2. **Convert words to phonemes** using the CMU Pronouncing Dictionary
-   (ARPABET). For unknown words, a deterministic grapheme-to-phoneme fallback
-   maps common English letter groups (`th`, `sh`, `tion`, `igh`, etc.) and
-   single letters to approximate ARPABET symbols.
-3. **Align words** with dynamic programming. Exact word matches cost `0`;
-   substitutions with close phoneme similarity cost `0.55`; deletions and
-   insertions cost `1`.
-4. **Score each aligned word**:
-   - Correct: exact or high phoneme match.
-   - Mispronounced: expected and actual words align but phoneme similarity is
-     low.
-   - Unclear: phonemes match but STT confidence is low.
-   - Missing: expected word is deleted in the alignment.
-   - Extra: transcript word is inserted in the alignment.
-5. **Overall score**:
+The provider returns:
+
+- transcript
+- timestamps
+- confidence
+
+---
+
+## Step 4
+
+Both the expected passage and transcript are normalized.
+
+Examples:
+
+- lowercase conversion
+- punctuation removal
+- whitespace normalization
+
+---
+
+## Step 5
+
+Words are converted into phonemes using:
+
+Primary:
+
+- CMU Pronouncing Dictionary
+
+Fallback:
+
+- deterministic grapheme-to-phoneme mapping
+
+---
+
+## Step 6
+
+Expected words and detected words are aligned using dynamic programming.
+
+Each word becomes one of:
+
+- Correct
+- Mispronounced
+- Missing
+- Extra
+- Unclear
+
+---
+
+## Step 7
+
+The final pronunciation score is calculated using deterministic mathematics.
+
+No LLM generates scores.
+
+---
+
+# Speech Recognition Strategy
+
+Primary Provider
+
+- Gradium AI
+
+Fallback Providers
+
+1. Groq Whisper
+2. Deepgram Nova
+3. OpenAI Whisper
+
+Provider selection is environment driven.
+
+The API automatically falls back to the next configured provider if one fails.
+
+This improves reliability while keeping downstream scoring identical.
+
+---
+
+# Scoring Methodology
+
+Scoring consists of four stages.
+
+## Word Accuracy
+
+Expected words are compared against detected words.
+
+Word Error Rate (WER) is calculated using Levenshtein distance.
+
+---
+
+## Phoneme Matching
+
+Words are converted into ARPABET phonemes.
+
+Unknown words use deterministic grapheme mapping.
+
+---
+
+## Dynamic Alignment
+
+Word alignment minimizes insertion, deletion, and substitution costs.
+
+Exact matches cost 0.
+
+Substitutions receive weighted penalties based on phoneme similarity.
+
+---
+
+## Overall Score
 
 ```text
-overall = 100 * (
-  0.65 * phonemeMatchRate +
-  0.25 * wordAccuracy +
-  0.10 * sttConfidence
+Overall Score =
+100 × (
+
+0.65 × Phoneme Match
+
++ 0.25 × Word Accuracy
+
++ 0.10 × STT Confidence
+
 )
 ```
 
-`wordAccuracy` is `1 - wordErrorRate`, where WER is Levenshtein edit distance
-over normalized word tokens divided by expected word count. The final value is
-clamped to `0-100` and rounded to an integer.
+The result is clamped between 0–100.
 
-## DPDP compliance
+---
 
-- **Consent**: the upload flow shows the required notice before submission:
-  "Your audio is processed temporarily and deleted within 24 hours. No data is
-  stored permanently." The API also requires a consent flag.
-- **Data minimization**: the app collects no name, email, account, IP-derived
-  profile, or learner metadata beyond the audio upload and expected prompt.
-- **Raw audio storage**: uploaded audio is read into memory for validation and
-  STT submission only. It is never written to disk or a database by the app.
-- **Retention**: scoring results and transcripts are stored only in an
-  in-memory map with automatic deletion after 24 hours. Serverless restarts can
-  delete them sooner.
-- **Deletion**: automatic deletion is scheduled per result ID. No persistent
-  copy exists for manual cleanup.
-- **Cloud STT providers**: when a provider is configured, audio is transmitted
-  to that provider solely for transcription. Production deployments should
-  verify the provider's current API terms for retention guarantees; the app does
-  not request training or long-term storage.
-- **Data residency**: if a provider offers India/APAC processing, that region
-  should be selected at the account/provider level. Gradium/Groq/OpenAI endpoint
-  region controls may be limited, so this is documented as a trade-off. Deepgram
-  can be configured separately if regional controls are required by policy.
+# Example Feedback
 
-## Duration and language constraints
+Expected
 
-The browser validates duration with media metadata before upload or after an
-in-page `MediaRecorder` capture. The API route revalidates duration with
-`music-metadata` and rejects files outside 30-45 seconds. English-only
-enforcement uses provider language metadata when available and a deterministic
-transcript heuristic based on Latin script and CMU/common English word coverage.
+```
+pronunciation
+```
 
-## Trade-offs and next improvements
+Detected
 
-- Vercel request body limits make compressed browser audio formats preferable
-  to large WAV files. A larger production deployment could use direct-to-object
-  temporary upload URLs with automatic object expiry, while still avoiding raw
-  audio persistence beyond the retention window.
-- Segment-only STT timestamps require derived word anchors for Gradium. With
-  more time, the app would add a forced aligner such as Montreal Forced Aligner
-  or a provider with native word timestamps for every request.
-- The phoneme fallback is intentionally deterministic and lightweight. A
-  production learner app could add accent-aware phoneme alternatives and
-  curriculum-specific rubrics without changing the auditable scoring contract.
-- Real user management is omitted to minimize personal data collection. If
-  accounts were added, consent records, deletion requests, and retention audits
-  would need persistent DPDP controls.
+```
+pronounciation
+```
+
+Reason
+
+```
+Vowel substitution
+```
+
+Confidence
+
+```
+94%
+```
+
+Recommendation
+
+```
+Shorten the vowel sound.
+
+Reduce emphasis on "OW".
+
+Aim for the "AH" vowel.
+```
+
+---
+
+# Live Demo Verification
+
+The demo does not simulate results.
+
+Running `/demo` performs real verification against the production pipeline.
+
+Checks include:
+
+- Provider connectivity
+- STT accuracy
+- Latency
+- Phoneme alignment
+- Deterministic scoring
+- Duration validation
+- Upload pipeline
+- DPDP workflow
+
+Missing API keys are reported honestly rather than hidden behind mocked success responses.
+
+---
+
+# Privacy & DPDP Considerations
+
+The platform follows a privacy-by-design approach.
+
+Implemented safeguards include:
+
+- explicit user consent
+- temporary in-memory processing
+- automatic deletion within 24 hours
+- no permanent raw audio storage
+- minimal personal data collection
+- provider disclosure before transcription
+
+Audio transmitted to third-party STT providers is used only for transcription. Data handling and retention by those providers are governed by their respective privacy policies and service terms.
+
+---
+
+# Trade-offs
+
+Current implementation intentionally favors transparency over complexity.
+
+Examples:
+
+- Segment-derived timestamps when native word timing is unavailable
+- Lightweight deterministic grapheme mapping
+- In-memory storage instead of persistent databases
+- English-only support
+
+---
+
+# Future Improvements
+
+Potential production enhancements include:
+
+- multilingual pronunciation assessment
+- accent-aware phoneme alternatives
+- forced alignment (Montreal Forced Aligner)
+- learner progress tracking
+- institution-specific scoring rubrics
+- temporary object-storage uploads for large files
+- statistical validation against human raters
+
+The deterministic scoring contract remains unchanged regardless of future improvements.
+
+---
+
+# Key Engineering Decisions
+
+- Deterministic scoring over LLM scoring
+- Provider abstraction over vendor lock-in
+- Explainability over opaque AI outputs
+- Privacy-first temporary processing
+- Auditable calculations suitable for educational assessment
+
+---
+
+## Summary
+
+DUNA separates **speech recognition** from **pronunciation assessment**.
+
+Speech recognition may vary between providers.
+
+Scoring does not.
+
+Every pronunciation decision is reproducible, explainable, and based on deterministic algorithms, making the platform suitable for educational feedback and assessment workflows while remaining privacy-conscious and provider independent.
