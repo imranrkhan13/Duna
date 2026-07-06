@@ -7,13 +7,21 @@ segment feedback.
 
 ## Live deployment
 
-The app is designed for Vercel deployment. Set at least one STT provider key in
-the deployment environment:
+The app is designed for Vercel deployment. This repository includes
+`vercel.json` with a 60 second function timeout for `/api/upload`.
+
+Set at least one STT provider key in the deployment environment:
 
 - `GRADIUM_API_KEY` (preferred)
 - `GROQ_API_KEY`
 - `DEEPGRAM_API_KEY`
 - `OPENAI_API_KEY`
+
+Then deploy:
+
+```bash
+npx vercel deploy --prod --yes
+```
 
 ## Features
 
