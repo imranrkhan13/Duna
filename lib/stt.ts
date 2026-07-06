@@ -138,7 +138,7 @@ async function transcribeWithGradium(input: SttInput): Promise<SttResult> {
         "x-api-key": process.env.GRADIUM_API_KEY ?? "",
         "content-type": input.mimeType || "application/octet-stream",
       },
-      body: input.buffer,
+      body: blobFromInput(input),
     },
   );
 
@@ -165,18 +165,23 @@ async function transcribeWithGradium(input: SttInput): Promise<SttResult> {
       | { type?: string };
 
     if (message.type === "error") {
-      throw new Error(message.error ?? message.detail ?? message.message ?? line);
+      const errorMessage = message as GradiumErrorMessage;
+      throw new Error(
+        errorMessage.error ?? errorMessage.detail ?? errorMessage.message ?? line,
+      );
     }
 
     if (message.type === "text") {
-      const streamId = message.stream_id ?? sequence;
-      pending.set(streamId, message);
+      const textMessage = message as GradiumTextMessage;
+      const streamId = textMessage.stream_id ?? sequence;
+      pending.set(streamId, textMessage);
       sequence += 1;
       continue;
     }
 
     if (message.type === "end_text") {
-      const streamId = message.stream_id ?? sequence - 1;
+      const endMessage = message as GradiumEndMessage;
+      const streamId = endMessage.stream_id ?? sequence - 1;
       const textMessage = pending.get(streamId);
 
       if (textMessage?.text) {
@@ -184,7 +189,7 @@ async function transcribeWithGradium(input: SttInput): Promise<SttResult> {
           segmentFromText(
             textMessage.text,
             textMessage.start_s,
-            message.stop_s,
+            endMessage.stop_s,
             undefined,
           ),
         );
@@ -263,7 +268,7 @@ async function transcribeWithDeepgram(input: SttInput): Promise<SttResult> {
         authorization: `Token ${process.env.DEEPGRAM_API_KEY}`,
         "content-type": input.mimeType || "application/octet-stream",
       },
-      body: input.buffer,
+      body: blobFromInput(input),
     },
   );
 
