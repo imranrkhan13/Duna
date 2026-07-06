@@ -74,6 +74,13 @@ export type PronunciationResult = {
   wordScores: WordScore[];
   feedback: SegmentFeedback[];
   expiresAt: string;
+  dpdpAudit?: {
+    uploadTimestamp: string;
+    processingTimestamp: string;
+    retention: string;
+    rawAudioPersisted: false;
+    deletionConfirmation: string;
+  };
 };
 
 export type UploadError = {

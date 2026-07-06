@@ -9,6 +9,14 @@ Frontend (Next.js + Tailwind)
       -> Phoneme Comparator (CMUdict + fallback grapheme mapper)
         -> Scoring Engine (deterministic alignment and scoring)
           -> JSON Response (score, word highlights, feedback)
+
+Demo Frontend (/demo)
+  -> API Route (/api/demo/verify)
+    -> Public WAV fixtures
+    -> Real Gradium/Groq/Deepgram API calls
+    -> Production /api/upload self-checks
+    -> Phoneme Comparator + Scoring Engine
+    -> JSON Report (status, raw responses, latency, issues)
 ```
 
 ## Model and API choices
@@ -28,6 +36,26 @@ Fallback providers are ordered by practical production fit:
 
 Provider selection is environment-based. The API route tries configured
 providers in order and returns a clear setup error if none are configured.
+Both underscore and prompt-style variable names are supported, for example
+`GRADIUM_API_KEY` and `GRADIUMAPIKEY`.
+
+## Live demo verification
+
+The `/demo` route is intentionally not a mock. It calls
+`/api/demo/verify`, which reads bundled spoken WAV fixtures from `public/` and
+runs seven checks:
+
+1. Gradium STT with automatic Groq fallback.
+2. Direct Groq Whisper.
+3. Direct Deepgram, skipped when no key is configured.
+4. Phoneme alignment using the real transcript from test 1.
+5. Deterministic scoring math using the real alignment.
+6. DPDP upload/deletion audit through the production `/api/upload` endpoint.
+7. Duration validation through `/api/upload` with 10s, 35s, and 60s fixtures.
+
+Each card returns real response data, latency, status, and issues. Missing keys
+are shown as skipped or failing configuration states rather than fabricated
+success responses.
 
 ## Scoring methodology
 
@@ -87,11 +115,11 @@ clamped to `0-100` and rounded to an integer.
 
 ## Duration and language constraints
 
-The browser validates duration with media metadata before upload. The API route
-revalidates duration with `music-metadata` and rejects files outside 30-45
-seconds. English-only enforcement uses provider language metadata when
-available and a deterministic transcript heuristic based on Latin script and
-CMU/common English word coverage.
+The browser validates duration with media metadata before upload or after an
+in-page `MediaRecorder` capture. The API route revalidates duration with
+`music-metadata` and rejects files outside 30-45 seconds. English-only
+enforcement uses provider language metadata when available and a deterministic
+transcript heuristic based on Latin script and CMU/common English word coverage.
 
 ## Trade-offs and next improvements
 

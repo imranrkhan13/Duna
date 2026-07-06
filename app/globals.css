@@ -2,6 +2,8 @@
 
 :root {
   color-scheme: light;
+  font-family:
+    Inter, Helvetica, Arial, sans-serif;
 }
 
 * {
@@ -10,13 +12,50 @@
 
 body {
   margin: 0;
+  font-family:
+    Inter, Helvetica, Arial, sans-serif;
   background:
-    radial-gradient(circle at top left, rgba(99, 102, 241, 0.14), transparent 32rem),
-    #f8fafc;
+    radial-gradient(circle at top left, rgba(251, 191, 36, 0.22), transparent 28rem),
+    radial-gradient(circle at 85% 12%, rgba(244, 114, 182, 0.16), transparent 26rem),
+    #f7f3ea;
 }
 
 button,
 textarea,
 input {
   font: inherit;
+}
+
+.painted-landscape {
+  background:
+    radial-gradient(circle at 18% 34%, rgba(252, 211, 77, 0.85), transparent 16rem),
+    radial-gradient(circle at 65% 26%, rgba(251, 146, 60, 0.68), transparent 14rem),
+    linear-gradient(175deg, transparent 0 42%, rgba(255, 255, 255, 0.88) 43% 100%),
+    linear-gradient(145deg, #f9a76d 0%, #fedb8b 28%, #b7d7be 58%, #f7f3ea 100%);
+  position: relative;
+}
+
+.painted-landscape::before {
+  background:
+    radial-gradient(ellipse at 28% 100%, #7f8e70 0 18%, transparent 19%),
+    radial-gradient(ellipse at 48% 100%, #8d6f89 0 18%, transparent 19%),
+    radial-gradient(ellipse at 70% 100%, #76a58b 0 18%, transparent 19%),
+    linear-gradient(180deg, transparent 0 60%, rgba(128, 161, 97, 0.6) 61% 100%);
+  bottom: 20%;
+  content: "";
+  filter: blur(0.5px);
+  inset-inline: 0;
+  position: absolute;
+  top: 18%;
+}
+
+.painted-landscape::after {
+  background:
+    radial-gradient(ellipse at 50% 40%, rgba(250, 204, 21, 0.35), transparent 26rem),
+    linear-gradient(90deg, rgba(118, 165, 139, 0.7), rgba(255, 255, 255, 0.85) 30% 70%, rgba(128, 161, 97, 0.7));
+  bottom: 0;
+  content: "";
+  height: 36%;
+  inset-inline: 0;
+  position: absolute;
 }

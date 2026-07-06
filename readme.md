@@ -7,17 +7,29 @@ segment feedback.
 
 ## Live deployment
 
-The app is designed for Vercel deployment. Set at least one STT provider key in
-the deployment environment:
+The app is designed for Vercel deployment. This repository includes
+`vercel.json` with 60 second function timeouts for `/api/upload` and
+`/api/demo/verify`.
 
-- `GRADIUM_API_KEY` (preferred)
-- `GROQ_API_KEY`
-- `DEEPGRAM_API_KEY`
-- `OPENAI_API_KEY`
+Set at least one STT provider key in the deployment environment:
+
+- `GRADIUM_API_KEY` or `GRADIUMAPIKEY` (preferred)
+- `GROQ_API_KEY` or `GROQAPIKEY`
+- `DEEPGRAM_API_KEY` or `DEEPGRAMAPIKEY`
+- `OPENAI_API_KEY` or `OPENAIAPIKEY`
+
+Then deploy:
+
+```bash
+npx vercel deploy --prod --yes
+```
 
 ## Features
 
-- Browser drag-drop audio upload with client-side duration validation.
+- Browser drag-drop audio upload and in-page microphone recording with
+  client-side duration validation.
+- `/demo` route that runs real API verification cards using bundled public WAV
+  fixtures and live provider calls.
 - Server-side audio MIME, size, and 30-45 second duration enforcement.
 - STT provider abstraction with Gradium first and Groq, Deepgram, OpenAI
   fallbacks.
@@ -37,7 +49,8 @@ npm install
 npm run dev
 ```
 
-Open `http://localhost:3000` and upload a 30-45 second English speech sample.
+Open `http://localhost:3000` and upload or record a 30-45 second English speech
+sample. Open `http://localhost:3000/demo` to run the no-upload live API demo.
 
 ## Production build
 
@@ -51,9 +64,13 @@ npm run build
 | Variable | Purpose |
 | --- | --- |
 | `GRADIUM_API_KEY` | Preferred Gradium AI speech-to-text provider. |
+| `GRADIUMAPIKEY` | Alternate Gradium key name supported by the demo prompt. |
 | `GROQ_API_KEY` | Groq Whisper fallback with fast English transcription. |
+| `GROQAPIKEY` | Alternate Groq key name. |
 | `DEEPGRAM_API_KEY` | Deepgram fallback with word timestamps and confidence. |
+| `DEEPGRAMAPIKEY` | Alternate Deepgram key name. |
 | `OPENAI_API_KEY` | OpenAI Whisper fallback. |
+| `OPENAIAPIKEY` | Alternate OpenAI key name. |
 
 No database is required. Raw audio is never written to disk or persisted.
 
@@ -61,18 +78,27 @@ No database is required. Raw audio is never written to disk or persisted.
 
 ```text
 app/
+  api/demo/verify/route.ts
   api/upload/route.ts
+  demo/page.tsx
   page.tsx
 components/
   AudioUploader.tsx
   ConsentBanner.tsx
+  DemoRunner.tsx
   FeedbackPanel.tsx
   ScoreDisplay.tsx
 lib/
+  demoTypes.ts
   dpdp.ts
   phoneme.ts
   scoring.ts
   stt.ts
+public/
+  test-audio.wav
+  too-short-10s.wav
+  valid-35s.wav
+  too-long-60s.wav
 ```
 
 See [ARCHITECTURE.md](./ARCHITECTURE.md) for model choices, scoring details,
