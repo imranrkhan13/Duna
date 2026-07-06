@@ -2,8 +2,15 @@
 
 :root {
   color-scheme: light;
+  --background: #fafafa;
+  --card: #ffffff;
+  --primary: #2563eb;
+  --accent: #0ea5e9;
+  --text: #111827;
+  --muted: #6b7280;
+  --border: #e5e7eb;
   font-family:
-    Inter, Helvetica, Arial, sans-serif;
+    var(--font-inter), Inter, Helvetica, Arial, sans-serif;
 }
 
 * {
@@ -13,17 +20,37 @@
 body {
   margin: 0;
   font-family:
-    Inter, Helvetica, Arial, sans-serif;
+    var(--font-inter), Inter, Helvetica, Arial, sans-serif;
   background:
-    radial-gradient(circle at top left, rgba(251, 191, 36, 0.22), transparent 28rem),
-    radial-gradient(circle at 85% 12%, rgba(244, 114, 182, 0.16), transparent 26rem),
-    #f7f3ea;
+    radial-gradient(circle at 20% 0%, rgba(37, 99, 235, 0.08), transparent 28rem),
+    radial-gradient(circle at 85% 18%, rgba(14, 165, 233, 0.08), transparent 24rem),
+    var(--background);
+  color: var(--text);
 }
 
 button,
 textarea,
 input {
   font: inherit;
+}
+
+::selection {
+  background: rgba(37, 99, 235, 0.16);
+}
+
+.bg-noise {
+  position: relative;
+}
+
+.bg-noise::before {
+  background-image: radial-gradient(rgba(17, 24, 39, 0.09) 0.5px, transparent 0.5px);
+  background-size: 12px 12px;
+  content: "";
+  inset: 0;
+  mask-image: linear-gradient(to bottom, black, transparent);
+  opacity: 0.18;
+  pointer-events: none;
+  position: absolute;
 }
 
 .painted-landscape {

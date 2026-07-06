@@ -1,7 +1,17 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  AlertTriangle,
+  CheckCircle2,
+  ChevronDown,
+  Clock3,
+  KeyRound,
+  Loader2,
+  XCircle,
+} from "lucide-react";
 
+import { MotionDiv, Reveal } from "@/components/ui/Motion";
 import type {
   DemoStatus,
   DemoTestResult,
@@ -9,15 +19,15 @@ import type {
 } from "@/lib/demoTypes";
 
 const STATUS_STYLES: Record<DemoStatus, string> = {
-  pass: "border-emerald-200 bg-emerald-50 text-emerald-900",
-  fail: "border-rose-200 bg-rose-50 text-rose-900",
-  skipped: "border-amber-200 bg-amber-50 text-amber-900",
+  pass: "border-emerald-200 bg-emerald-50 text-emerald-700",
+  fail: "border-rose-200 bg-rose-50 text-rose-700",
+  skipped: "border-amber-200 bg-amber-50 text-amber-700",
 };
 
-const STATUS_ICON: Record<DemoStatus, string> = {
-  pass: "✓",
-  fail: "×",
-  skipped: "!",
+const STATUS_ICON = {
+  pass: CheckCircle2,
+  fail: XCircle,
+  skipped: AlertTriangle,
 };
 
 export function DemoRunner() {
@@ -68,17 +78,18 @@ export function DemoRunner() {
   );
 
   return (
-    <div className="space-y-8">
-      <section className="rounded-[2rem] border border-stone-200 bg-white/85 p-6 shadow-sm backdrop-blur">
+    <div className="space-y-6">
+      <Reveal>
+      <section className="rounded-[2rem] border border-gray-200 bg-white p-6 shadow-[0_18px_70px_rgba(17,24,39,0.05)]">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.24em] text-stone-500">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-blue-600">
               Live API verification
             </p>
-            <h1 className="mt-3 text-4xl font-semibold tracking-tight text-stone-950 sm:text-5xl">
+            <h2 className="mt-3 text-3xl font-semibold tracking-[-0.05em] text-gray-950 sm:text-5xl">
               Demo proves the stack with real calls
-            </h1>
-            <p className="mt-3 max-w-3xl text-base leading-7 text-stone-600">
+            </h2>
+            <p className="mt-3 max-w-3xl text-sm leading-7 text-gray-500 sm:text-base">
               This page hits provider APIs and the production upload endpoint.
               Missing keys are shown explicitly; successful cards include real
               response payloads and latency.
@@ -86,11 +97,12 @@ export function DemoRunner() {
           </div>
 
           <button
-            className="rounded-full bg-stone-950 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-stone-800 disabled:cursor-wait disabled:bg-stone-400"
+            className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-blue-600 px-5 text-sm font-medium text-white shadow-[0_14px_34px_rgba(37,99,235,0.22)] transition hover:-translate-y-0.5 hover:bg-blue-500 disabled:cursor-wait disabled:bg-gray-300"
             disabled={isLoading}
             type="button"
             onClick={() => void runDemo()}
           >
+            {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
             {isLoading ? "Running live tests..." : "Run live verification"}
           </button>
         </div>
@@ -110,20 +122,27 @@ export function DemoRunner() {
           </div>
         ) : null}
       </section>
+      </Reveal>
 
       {report ? (
-        <section className="rounded-[2rem] border border-stone-200 bg-white/80 p-6 shadow-sm">
-          <h2 className="text-xl font-semibold text-stone-950">
-            Environment keys
-          </h2>
+        <Reveal delay={0.05}>
+        <section className="rounded-[2rem] border border-gray-200 bg-white p-6 shadow-[0_18px_70px_rgba(17,24,39,0.04)]">
+          <div className="flex items-center gap-3">
+            <span className="grid h-10 w-10 place-items-center rounded-2xl bg-blue-50 text-blue-600">
+              <KeyRound className="h-5 w-5" />
+            </span>
+            <h2 className="text-xl font-semibold tracking-[-0.03em] text-gray-950">
+              Environment keys
+            </h2>
+          </div>
           <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
             {report.apiKeys.map((key) => (
               <div
-                className="rounded-2xl border border-stone-200 bg-stone-50 p-4"
+                className="rounded-2xl border border-gray-200 bg-[#FAFAFA] p-4"
                 key={key.label}
               >
                 <div className="flex items-center justify-between gap-3">
-                  <p className="font-semibold text-stone-950">{key.label}</p>
+                  <p className="font-semibold text-gray-950">{key.label}</p>
                   <span
                     className={`rounded-full px-3 py-1 text-xs font-bold ${
                       key.configured
@@ -134,13 +153,14 @@ export function DemoRunner() {
                     {key.configured ? "Configured" : "Missing"}
                   </span>
                 </div>
-                <p className="mt-2 text-xs leading-5 text-stone-500">
+                <p className="mt-2 text-xs leading-5 text-gray-500">
                   {key.names.join(" or ")}
                 </p>
               </div>
             ))}
           </div>
         </section>
+        </Reveal>
       ) : null}
 
       {error ? (
@@ -150,11 +170,13 @@ export function DemoRunner() {
       ) : null}
 
       <section className="grid gap-4">
-        {report?.tests.map((test) => (
-          <DemoCard key={test.id} test={test} />
+        {report?.tests.map((test, index) => (
+          <Reveal delay={index * 0.04} key={test.id}>
+            <DemoCard test={test} />
+          </Reveal>
         ))}
         {isLoading && !report ? (
-          <div className="rounded-[2rem] border border-stone-200 bg-white/80 p-8 text-stone-600 shadow-sm">
+          <div className="rounded-[2rem] border border-gray-200 bg-white p-8 text-gray-500 shadow-sm">
             Running real API checks. This can take a moment because provider
             calls and upload validation are executed live.
           </div>
@@ -189,37 +211,45 @@ export function DemoRunner() {
 }
 
 function DemoCard({ test }: { test: DemoTestResult }) {
+  const Icon = STATUS_ICON[test.status];
+
   return (
-    <details className="group rounded-[2rem] border border-stone-200 bg-white/85 p-5 shadow-sm open:bg-white">
+    <details className="group rounded-[2rem] border border-gray-200 bg-white p-5 shadow-[0_18px_70px_rgba(17,24,39,0.04)] open:bg-white">
       <summary className="flex cursor-pointer list-none flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="flex items-start gap-4">
           <span
-            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full border text-xl font-bold ${STATUS_STYLES[test.status]}`}
+            className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border ${STATUS_STYLES[test.status]}`}
           >
-            {STATUS_ICON[test.status]}
+            <Icon className="h-5 w-5" />
           </span>
           <div>
-            <h3 className="text-xl font-semibold text-stone-950">
+            <h3 className="text-xl font-semibold tracking-[-0.03em] text-gray-950">
               {test.title}
             </h3>
-            <p className="mt-1 text-sm leading-6 text-stone-600">
+            <p className="mt-1 text-sm leading-6 text-gray-500">
               {test.summary}
             </p>
           </div>
         </div>
         <div className="flex items-center gap-3 text-sm">
-          <span className="rounded-full bg-stone-100 px-3 py-1 font-semibold text-stone-700">
+          <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-3 py-1 font-medium text-gray-600">
+            <Clock3 className="h-3 w-3" />
             {test.latencyMs}ms
           </span>
           <span
-            className={`rounded-full border px-3 py-1 text-xs font-bold uppercase tracking-wide ${STATUS_STYLES[test.status]}`}
+            className={`rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-wide ${STATUS_STYLES[test.status]}`}
           >
             {test.status}
           </span>
+          <ChevronDown className="h-4 w-4 text-gray-400 transition group-open:rotate-180" />
         </div>
       </summary>
 
-      <div className="mt-5 border-t border-stone-100 pt-5">
+      <MotionDiv
+        className="mt-5 border-t border-gray-100 pt-5"
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+      >
         {test.issues.length > 0 ? (
           <div className="mb-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">
             <p className="font-semibold">Issues</p>
@@ -231,10 +261,10 @@ function DemoCard({ test }: { test: DemoTestResult }) {
           </div>
         ) : null}
 
-        <pre className="max-h-[36rem] overflow-auto rounded-2xl bg-stone-950 p-4 text-xs leading-5 text-stone-100">
+        <pre className="max-h-[36rem] overflow-auto rounded-2xl bg-gray-950 p-4 text-xs leading-5 text-gray-100">
           {JSON.stringify(test.details, null, 2)}
         </pre>
-      </div>
+      </MotionDiv>
     </details>
   );
 }
@@ -247,11 +277,11 @@ function SummaryMetric({
   value: string | number;
 }) {
   return (
-    <div className="rounded-2xl border border-stone-200 bg-stone-50 p-4">
-      <p className="text-xs font-bold uppercase tracking-wide text-stone-500">
+    <div className="rounded-2xl border border-gray-200 bg-[#FAFAFA] p-4">
+      <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
         {label}
       </p>
-      <p className="mt-2 text-2xl font-semibold text-stone-950">{value}</p>
+      <p className="mt-2 text-2xl font-semibold text-gray-950">{value}</p>
     </div>
   );
 }
