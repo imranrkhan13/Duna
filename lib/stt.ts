@@ -80,22 +80,22 @@ export async function transcribeAudio(input: SttInput): Promise<SttResult> {
   const providers: Provider[] = [
     {
       name: "Gradium STT",
-      enabled: Boolean(process.env.GRADIUM_API_KEY),
+      enabled: Boolean(getApiKey("GRADIUM_API_KEY", "GRADIUMAPIKEY")),
       transcribe: transcribeWithGradium,
     },
     {
       name: "Groq Whisper",
-      enabled: Boolean(process.env.GROQ_API_KEY),
+      enabled: Boolean(getApiKey("GROQ_API_KEY", "GROQAPIKEY")),
       transcribe: transcribeWithGroq,
     },
     {
       name: "Deepgram",
-      enabled: Boolean(process.env.DEEPGRAM_API_KEY),
+      enabled: Boolean(getApiKey("DEEPGRAM_API_KEY", "DEEPGRAMAPIKEY")),
       transcribe: transcribeWithDeepgram,
     },
     {
       name: "OpenAI Whisper",
-      enabled: Boolean(process.env.OPENAI_API_KEY),
+      enabled: Boolean(getApiKey("OPENAI_API_KEY", "OPENAIAPIKEY")),
       transcribe: transcribeWithOpenAI,
     },
   ];
@@ -128,14 +128,14 @@ export async function transcribeAudio(input: SttInput): Promise<SttResult> {
   );
 }
 
-async function transcribeWithGradium(input: SttInput): Promise<SttResult> {
+export async function transcribeWithGradium(input: SttInput): Promise<SttResult> {
   const config = encodeURIComponent(JSON.stringify({ language: "en" }));
   const response = await fetch(
     `https://api.gradium.ai/api/post/speech/asr?json_config=${config}`,
     {
       method: "POST",
       headers: {
-        "x-api-key": process.env.GRADIUM_API_KEY ?? "",
+        "x-api-key": getApiKey("GRADIUM_API_KEY", "GRADIUMAPIKEY") ?? "",
         "content-type": input.mimeType || "application/octet-stream",
       },
       body: blobFromInput(input),
@@ -216,7 +216,7 @@ async function transcribeWithGradium(input: SttInput): Promise<SttResult> {
   };
 }
 
-async function transcribeWithGroq(input: SttInput): Promise<SttResult> {
+export async function transcribeWithGroq(input: SttInput): Promise<SttResult> {
   const formData = new FormData();
   formData.append("file", blobFromInput(input), input.fileName);
   formData.append("model", "whisper-large-v3-turbo");
@@ -230,7 +230,7 @@ async function transcribeWithGroq(input: SttInput): Promise<SttResult> {
     {
       method: "POST",
       headers: {
-        authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+        authorization: `Bearer ${getApiKey("GROQ_API_KEY", "GROQAPIKEY")}`,
       },
       body: formData,
     },
@@ -239,7 +239,7 @@ async function transcribeWithGroq(input: SttInput): Promise<SttResult> {
   return parseOpenAiCompatibleResponse(response, "Groq Whisper");
 }
 
-async function transcribeWithOpenAI(input: SttInput): Promise<SttResult> {
+export async function transcribeWithOpenAI(input: SttInput): Promise<SttResult> {
   const formData = new FormData();
   formData.append("file", blobFromInput(input), input.fileName);
   formData.append("model", "whisper-1");
@@ -251,7 +251,7 @@ async function transcribeWithOpenAI(input: SttInput): Promise<SttResult> {
   const response = await fetch("https://api.openai.com/v1/audio/transcriptions", {
     method: "POST",
     headers: {
-      authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+      authorization: `Bearer ${getApiKey("OPENAI_API_KEY", "OPENAIAPIKEY")}`,
     },
     body: formData,
   });
@@ -259,13 +259,13 @@ async function transcribeWithOpenAI(input: SttInput): Promise<SttResult> {
   return parseOpenAiCompatibleResponse(response, "OpenAI Whisper");
 }
 
-async function transcribeWithDeepgram(input: SttInput): Promise<SttResult> {
+export async function transcribeWithDeepgram(input: SttInput): Promise<SttResult> {
   const response = await fetch(
     "https://api.deepgram.com/v1/listen?model=nova-2&language=en&smart_format=true&punctuate=true&detect_language=false",
     {
       method: "POST",
       headers: {
-        authorization: `Token ${process.env.DEEPGRAM_API_KEY}`,
+        authorization: `Token ${getApiKey("DEEPGRAM_API_KEY", "DEEPGRAMAPIKEY")}`,
         "content-type": input.mimeType || "application/octet-stream",
       },
       body: blobFromInput(input),
@@ -417,4 +417,15 @@ function logProbabilityToConfidence(avgLogprob?: number) {
 
 function errorMessage(error: unknown) {
   return error instanceof Error ? error.message : String(error);
+}
+
+export function getApiKey(...names: string[]) {
+  for (const name of names) {
+    const value = process.env[name];
+    if (value) {
+      return value;
+    }
+  }
+
+  return undefined;
 }

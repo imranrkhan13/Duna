@@ -21,6 +21,7 @@ const MAX_AUDIO_BYTES = 25 * 1024 * 1024;
 
 export async function POST(request: Request) {
   try {
+    const uploadTimestamp = new Date().toISOString();
     const formData = await request.formData();
     try {
       assertConsent(formData.get("consent"));
@@ -67,6 +68,21 @@ export async function POST(request: Request) {
       );
     }
 
+    if (formData.get("validationOnly") === "duration") {
+      return NextResponse.json(
+        {
+          accepted: true,
+          duration,
+          message: `Audio duration is valid at ${duration.toFixed(1)} seconds.`,
+        },
+        {
+          headers: {
+            "cache-control": "no-store",
+          },
+        },
+      );
+    }
+
     const transcription = await transcribeAudio({
       buffer,
       mimeType: audio.type,
@@ -92,6 +108,14 @@ export async function POST(request: Request) {
       words: transcription.words,
       expiresAt: getExpiryDate(),
     });
+    result.dpdpAudit = {
+      uploadTimestamp,
+      processingTimestamp: new Date().toISOString(),
+      retention: "Transcript and score are stored in memory only and expire within 24 hours.",
+      rawAudioPersisted: false,
+      deletionConfirmation:
+        "Raw uploaded audio was processed from request memory only and was not written to disk or a database.",
+    };
 
     rememberResult(result);
 
