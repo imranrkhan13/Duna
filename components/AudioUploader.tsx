@@ -10,7 +10,7 @@ import { FeedbackPanel } from "./FeedbackPanel";
 import { ScoreDisplay } from "./ScoreDisplay";
 import type { PronunciationResult, UploadError } from "@/lib/types";
 
-const MIN_DURATION_SECONDS = 30;
+const MIN_DURATION_SECONDS = 1;
 const MAX_DURATION_SECONDS = 45;
 const MAX_AUDIO_BYTES = 25 * 1024 * 1024;
 
@@ -272,7 +272,7 @@ export function AudioUploader() {
     }
 
     if (!fileToScore) {
-      setError("Choose a 30-45 second English speech audio file.");
+      setError("Record your voice or upload an English speech audio file.");
       return;
     }
 
@@ -367,14 +367,14 @@ export function AudioUploader() {
             onChange={(event) => setExpectedText(event.target.value)}
           />
           <p className="mt-3 text-sm text-gray-500">
-            {wordCount} words. Use a passage that naturally takes 30-45 seconds
-            to read.
+            {wordCount} words. Short recordings are okay; missing words will be
+            scored as part of the assessment.
           </p>
         </StepCard>
 
         <StepCard
           complete={Boolean(file)}
-          description="Record with the browser mic or upload a 30-45 second English audio file."
+          description="Record with the browser mic for the fastest path. Upload is secondary."
           step={3}
           title="Audio"
         >

@@ -133,7 +133,7 @@ export function isLikelyEnglishTranscript(text: string, language?: string) {
   }
 
   const words = tokenizeWords(text);
-  if (words.length < 3) {
+  if (words.length < 1) {
     return false;
   }
 
