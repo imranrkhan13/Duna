@@ -56,8 +56,9 @@ npm install
 npm run dev
 ```
 
-Open `http://localhost:3000` and upload or record a 30-45 second English speech
-sample. Open `http://localhost:3000/demo` to run the no-upload live API demo.
+Open `http://localhost:3000` and record a short English speech sample, or use
+secondary upload. Open `http://localhost:3000/demo` to run the no-upload live
+API demo.
 
 ## Production build
 

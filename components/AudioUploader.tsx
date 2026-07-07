@@ -69,7 +69,11 @@ export function AudioUploader() {
 
   async function handleFile(
     nextFile: File | undefined,
-    options: { autoSubmit?: boolean; consented?: boolean } = {},
+    options: {
+      autoSubmit?: boolean;
+      consented?: boolean;
+      source?: "recording" | "upload";
+    } = {},
   ) {
     setError(null);
     setResult(null);
@@ -114,13 +118,19 @@ export function AudioUploader() {
       setFile(nextFile);
       setDuration(nextDuration);
       if (options.autoSubmit) {
-        void submit(nextFile);
+        void submit(nextFile, {
+          consented: options.consented,
+          source: options.source,
+        });
       }
     } catch (durationError) {
       if (options.autoSubmit) {
         setFile(nextFile);
         setDuration(null);
-        void submit(nextFile, { consented: options.consented });
+        void submit(nextFile, {
+          consented: options.consented,
+          source: options.source,
+        });
         return;
       }
 
@@ -271,7 +281,11 @@ export function AudioUploader() {
           }
           return URL.createObjectURL(recordedFile);
         });
-        void handleFile(recordedFile, { autoSubmit: true, consented: true });
+        void handleFile(recordedFile, {
+          autoSubmit: true,
+          consented: true,
+          source: "recording",
+        });
       };
 
       recorder.start();
@@ -310,24 +324,24 @@ export function AudioUploader() {
 
   async function submit(
     fileOverride?: File,
-    options: { consented?: boolean } = {},
+    options: { consented?: boolean; source?: "recording" | "upload" } = {},
   ) {
     setError(null);
     setResult(null);
     const fileToScore = fileOverride ?? file;
 
     if (!accepted && !options.consented) {
-      setError("Please accept the DPDP consent notice before upload.");
+      setError("Please accept the DPDP consent notice before recording or scoring.");
       return;
     }
 
     if (wordCount < 5) {
-      setError("Add the expected English passage before upload.");
+      setError("Add the expected English passage before recording or scoring.");
       return;
     }
 
     if (!fileToScore) {
-      setError("Record your voice or upload an English speech audio file.");
+      setError("No recording was captured. Click Start speaking, then Stop when done.");
       return;
     }
 
@@ -335,6 +349,7 @@ export function AudioUploader() {
     formData.append("consent", "true");
     formData.append("expectedText", expectedText);
     formData.append("audio", fileToScore);
+    formData.append("source", options.source ?? "upload");
 
     setIsSubmitting(true);
 

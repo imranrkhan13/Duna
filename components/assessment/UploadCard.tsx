@@ -48,7 +48,7 @@ export function UploadCard({
       <span className="mt-2 max-w-sm text-sm leading-6 text-gray-500">
         {duration
           ? `${duration.toFixed(1)} seconds detected`
-          : "MP3, WAV, M4A, OGG, or WebM. Duration is verified before upload."}
+          : "Secondary option: MP3, WAV, M4A, OGG, or WebM. Recording is the primary flow."}
       </span>
     </label>
   );
