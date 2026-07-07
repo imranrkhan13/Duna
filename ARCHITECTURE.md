@@ -41,6 +41,13 @@ Both underscore and prompt-style variable names are supported, for example
 
 ## Live demo verification
 
+The landing page also includes a demo-first product tour using five bundled
+recordings (`demo-excellent.wav`, `demo-good.wav`, `demo-average.wav`,
+`demo-poor.wav`, and `demo-strong-accent.wav`). Those samples are prepackaged so
+users can understand the upload -> speech recognition -> transcript -> phoneme
+alignment -> scoring -> feedback flow immediately without supplying personal
+audio.
+
 The `/demo` route is intentionally not a mock. It calls
 `/api/demo/verify`, which reads bundled spoken WAV fixtures from `public/` and
 runs seven checks. The primary fixture,

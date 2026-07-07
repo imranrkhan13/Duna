@@ -38,19 +38,19 @@ export function Hero() {
             <MotionDiv whileTap={{ scale: 0.98 }}>
               <Link
                 className="inline-flex h-11 items-center gap-2 rounded-full bg-blue-600 px-5 text-sm font-medium text-white shadow-[0_14px_34px_rgba(37,99,235,0.24)] transition hover:-translate-y-0.5 hover:bg-blue-500"
-                href="#product"
+                href="#live-demo"
               >
-                Score Audio
+                Run Live Demo
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </MotionDiv>
             <MotionDiv whileTap={{ scale: 0.98 }}>
               <Link
                 className="inline-flex h-11 items-center gap-2 rounded-full border border-gray-200 bg-white px-5 text-sm font-medium text-gray-950 shadow-sm transition hover:-translate-y-0.5 hover:border-gray-300"
-                href="/demo"
+                href="#product"
               >
                 <PlayCircle className="h-4 w-4 text-sky-500" />
-                Live Demo
+                Score Audio
               </Link>
             </MotionDiv>
           </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { Recorder } from "./assessment/Recorder";
 import { StepCard } from "./assessment/StepCard";
@@ -29,24 +29,37 @@ export function AudioUploader() {
     "idle" | "recording" | "processing"
   >("idle");
   const [recordingSeconds, setRecordingSeconds] = useState(0);
+  const [micLevel, setMicLevel] = useState(0);
+  const [recordedAudioUrl, setRecordedAudioUrl] = useState<string | null>(null);
   const [result, setResult] = useState<PronunciationResult | null>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const recordingChunksRef = useRef<Blob[]>([]);
   const streamRef = useRef<MediaStream | null>(null);
   const recordingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const autoStopTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const levelFrameRef = useRef<number | null>(null);
 
   const wordCount = useMemo(
     () => expectedText.trim().split(/\s+/).filter(Boolean).length,
     [expectedText],
   );
 
-  const handleFile = useCallback(async (nextFile: File | undefined) => {
+  async function handleFile(
+    nextFile: File | undefined,
+    options: { autoSubmit?: boolean } = {},
+  ) {
     setError(null);
     setResult(null);
 
     if (!nextFile) {
       return;
+    }
+
+    if (!options.autoSubmit && recordedAudioUrl) {
+      URL.revokeObjectURL(recordedAudioUrl);
+      setRecordedAudioUrl(null);
     }
 
     if (!nextFile.type.startsWith("audio/")) {
@@ -79,6 +92,9 @@ export function AudioUploader() {
 
       setFile(nextFile);
       setDuration(nextDuration);
+      if (options.autoSubmit) {
+        void submit(nextFile);
+      }
     } catch (durationError) {
       setFile(null);
       setDuration(null);
@@ -88,7 +104,7 @@ export function AudioUploader() {
           : "Could not read audio duration.",
       );
     }
-  }, []);
+  }
 
   function clearRecordingTimers() {
     if (recordingTimerRef.current) {
@@ -102,12 +118,40 @@ export function AudioUploader() {
     }
   }
 
+  function stopMicAnalysis() {
+    if (levelFrameRef.current) {
+      cancelAnimationFrame(levelFrameRef.current);
+      levelFrameRef.current = null;
+    }
+
+    void audioContextRef.current?.close().catch(() => undefined);
+    audioContextRef.current = null;
+    analyserRef.current = null;
+    setMicLevel(0);
+  }
+
+  function clearRecordedAudio() {
+    if (recordedAudioUrl) {
+      URL.revokeObjectURL(recordedAudioUrl);
+    }
+
+    setRecordedAudioUrl(null);
+    setFile(null);
+    setDuration(null);
+    setResult(null);
+    setError(null);
+  }
+
   useEffect(
     () => () => {
       clearRecordingTimers();
+      stopMicAnalysis();
+      if (recordedAudioUrl) {
+        URL.revokeObjectURL(recordedAudioUrl);
+      }
       streamRef.current?.getTracks().forEach((track) => track.stop());
     },
-    [],
+    [recordedAudioUrl],
   );
 
   async function startRecording() {
@@ -127,10 +171,29 @@ export function AudioUploader() {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const recorder = new MediaRecorder(stream);
+      const audioContext = new AudioContext();
+      const source = audioContext.createMediaStreamSource(stream);
+      const analyser = audioContext.createAnalyser();
+      const samples = new Uint8Array(analyser.frequencyBinCount);
 
       streamRef.current = stream;
       recorderRef.current = recorder;
+      audioContextRef.current = audioContext;
+      analyserRef.current = analyser;
       recordingChunksRef.current = [];
+      source.connect(analyser);
+
+      const updateLevel = () => {
+        analyser.getByteTimeDomainData(samples);
+        const peak =
+          samples.reduce(
+            (max, sample) => Math.max(max, Math.abs(sample - 128)),
+            0,
+          ) / 128;
+        setMicLevel(Math.min(1, peak * 2.4));
+        levelFrameRef.current = requestAnimationFrame(updateLevel);
+      };
+      updateLevel();
 
       recorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
@@ -146,10 +209,17 @@ export function AudioUploader() {
         });
 
         stream.getTracks().forEach((track) => track.stop());
+        stopMicAnalysis();
         streamRef.current = null;
         recorderRef.current = null;
         setRecordingState("idle");
-        void handleFile(recordedFile);
+        setRecordedAudioUrl((currentUrl) => {
+          if (currentUrl) {
+            URL.revokeObjectURL(currentUrl);
+          }
+          return URL.createObjectURL(recordedFile);
+        });
+        void handleFile(recordedFile, { autoSubmit: true });
       };
 
       recorder.start();
@@ -166,6 +236,8 @@ export function AudioUploader() {
       }, MAX_DURATION_SECONDS * 1000);
     } catch (recordingError) {
       setRecordingState("idle");
+      stopMicAnalysis();
+      streamRef.current?.getTracks().forEach((track) => track.stop());
       setError(
         recordingError instanceof Error
           ? recordingError.message
@@ -184,9 +256,10 @@ export function AudioUploader() {
     }
   }
 
-  async function submit() {
+  async function submit(fileOverride?: File) {
     setError(null);
     setResult(null);
+    const fileToScore = fileOverride ?? file;
 
     if (!accepted) {
       setError("Please accept the DPDP consent notice before upload.");
@@ -198,7 +271,7 @@ export function AudioUploader() {
       return;
     }
 
-    if (!file) {
+    if (!fileToScore) {
       setError("Choose a 30-45 second English speech audio file.");
       return;
     }
@@ -206,7 +279,7 @@ export function AudioUploader() {
     const formData = new FormData();
     formData.append("consent", "true");
     formData.append("expectedText", expectedText);
-    formData.append("audio", file);
+    formData.append("audio", fileToScore);
 
     setIsSubmitting(true);
 
@@ -307,8 +380,12 @@ export function AudioUploader() {
         >
           <div className="space-y-5">
             <Recorder
+              isScoring={isSubmitting}
+              level={micLevel}
+              recordedAudioUrl={recordedAudioUrl}
               seconds={recordingSeconds}
               state={recordingState}
+              onDelete={clearRecordedAudio}
               onStart={() => void startRecording()}
               onStop={stopRecording}
             />

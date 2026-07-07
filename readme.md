@@ -33,6 +33,9 @@ npx vercel deploy --prod --yes
 - Built-in pronunciation correction fixture that intentionally says "box/log"
   while the expected passage says "fox/dog", so configured STT providers show
   real transcripts and the scoring engine highlights pronunciation issues.
+- Demo-first landing experience with five bundled recordings: Excellent, Good,
+  Average, Poor, and Strong accent. Each sample includes audio, transcript,
+  word-level feedback, and a final score without requiring upload.
 - Server-side audio MIME, size, and 30-45 second duration enforcement.
 - STT provider abstraction with Gradium first and Groq, Deepgram, OpenAI
   fallbacks.
@@ -98,6 +101,11 @@ lib/
   scoring.ts
   stt.ts
 public/
+  demo-excellent.wav
+  demo-good.wav
+  demo-average.wav
+  demo-poor.wav
+  demo-strong-accent.wav
   pronunciation-correction-demo.wav
   test-audio.wav
   too-short-10s.wav

@@ -6,11 +6,24 @@ import { Mic, Square } from "lucide-react";
 type RecorderProps = {
   state: "idle" | "recording" | "processing";
   seconds: number;
+  level: number;
+  recordedAudioUrl?: string | null;
+  isScoring?: boolean;
   onStart: () => void;
   onStop: () => void;
+  onDelete: () => void;
 };
 
-export function Recorder({ state, seconds, onStart, onStop }: RecorderProps) {
+export function Recorder({
+  state,
+  seconds,
+  level,
+  recordedAudioUrl,
+  isScoring = false,
+  onStart,
+  onStop,
+  onDelete,
+}: RecorderProps) {
   const isRecording = state === "recording";
 
   return (
@@ -32,7 +45,7 @@ export function Recorder({ state, seconds, onStart, onStop }: RecorderProps) {
               {isRecording ? "Listening now" : "Record in browser"}
             </p>
             <p className="mt-1 text-sm text-gray-500">
-              Speak naturally for 30-45 seconds. Auto-stops at 45 seconds.
+              Speak naturally for 30-45 seconds. Stop to score automatically.
             </p>
           </div>
         </div>
@@ -49,12 +62,12 @@ export function Recorder({ state, seconds, onStart, onStop }: RecorderProps) {
         ) : (
           <button
             className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-blue-600 px-5 text-sm font-medium text-white shadow-[0_12px_30px_rgba(37,99,235,0.2)] transition hover:-translate-y-0.5 disabled:cursor-wait disabled:bg-gray-300"
-            disabled={state === "processing"}
+            disabled={state === "processing" || isScoring}
             type="button"
             onClick={onStart}
           >
             <Mic className="h-4 w-4" />
-            {state === "processing" ? "Preparing audio" : "Start speaking"}
+            {state === "processing" || isScoring ? "Processing" : "Start speaking"}
           </button>
         )}
       </div>
@@ -89,10 +102,40 @@ export function Recorder({ state, seconds, onStart, onStop }: RecorderProps) {
           <Telemetry label="Timer" value={formatTimer(seconds)} />
           <Telemetry
             label="Noise level"
-            value={isRecording ? "Adaptive" : "Standby"}
+            value={isRecording ? `${Math.round(level * 100)}%` : "Standby"}
           />
         </div>
       </div>
+
+      {recordedAudioUrl ? (
+        <div className="mt-4 rounded-2xl border border-gray-200 bg-white p-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-semibold text-gray-950">
+                Recorded audio ready
+              </p>
+              <p className="mt-1 text-xs text-gray-500">
+                Attached automatically and sent for scoring.
+              </p>
+            </div>
+            <button
+              className="rounded-full border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 transition hover:border-rose-200 hover:text-rose-600"
+              type="button"
+              onClick={onDelete}
+            >
+              Delete & Record Again
+            </button>
+          </div>
+          <audio
+            className="mt-4 w-full"
+            controls
+            preload="metadata"
+            src={recordedAudioUrl}
+          >
+            Your browser does not support audio playback.
+          </audio>
+        </div>
+      ) : null}
 
       <div className="mt-4 rounded-2xl border border-gray-200 bg-white p-4">
         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-gray-400">

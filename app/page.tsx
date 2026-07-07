@@ -1,4 +1,5 @@
 import { AudioUploader } from "@/components/AudioUploader";
+import { TryLiveDemo } from "@/components/demo/TryLiveDemo";
 import { Footer } from "@/components/marketing/Footer";
 import { Hero } from "@/components/marketing/Hero";
 import { Navbar } from "@/components/marketing/Navbar";
@@ -11,6 +12,7 @@ export default function Home() {
     <main className="bg-noise min-h-screen">
       <Navbar />
       <Hero />
+      <TryLiveDemo />
       <TrustSection />
       <Section className="py-20" id="pricing">
         <StatsGrid />
