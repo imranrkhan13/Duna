@@ -37,14 +37,14 @@ export async function POST(request: Request) {
     const expectedText = getString(formData.get("expectedText")).trim();
     if (tokenizeWords(expectedText).length < 5) {
       return errorResponse(
-        "Please provide the expected English passage before uploading audio.",
+        "Please provide the expected English passage before scoring audio.",
         400,
       );
     }
 
     const audio = formData.get("audio");
     if (!(audio instanceof File)) {
-      return errorResponse("Upload an audio file to continue.", 400);
+      return errorResponse("Record your voice or choose an audio file to continue.", 400);
     }
 
     if (!audio.type.startsWith("audio/")) {
@@ -55,13 +55,16 @@ export async function POST(request: Request) {
       return errorResponse("Audio files must be 25 MB or smaller.", 413);
     }
 
+    const source = getString(formData.get("source")) === "recording" ? "recording" : "upload";
     const buffer = Buffer.from(await audio.arrayBuffer());
-    const duration = await readDuration(buffer, audio.type);
+    const duration = await readDuration(buffer, audio.type, {
+      allowUnknownDuration: source === "recording",
+    });
 
-    if (
+    if (duration !== null && (
       duration < MIN_DURATION_SECONDS ||
       duration > MAX_DURATION_SECONDS
-    ) {
+    )) {
       return errorResponse(
         `Audio must be between ${MIN_DURATION_SECONDS} and ${MAX_DURATION_SECONDS} seconds. This file is ${duration.toFixed(1)} seconds.`,
         400,
@@ -73,7 +76,10 @@ export async function POST(request: Request) {
         {
           accepted: true,
           duration,
-          message: `Audio duration is valid at ${duration.toFixed(1)} seconds.`,
+          message:
+            duration === null
+              ? "Audio duration metadata was unavailable, but recording validation passed."
+              : `Audio duration is valid at ${duration.toFixed(1)} seconds.`,
         },
         {
           headers: {
@@ -137,17 +143,28 @@ function getString(value: FormDataEntryValue | null) {
   return typeof value === "string" ? value : "";
 }
 
-async function readDuration(buffer: Buffer, mimeType: string) {
+async function readDuration(
+  buffer: Buffer,
+  mimeType: string,
+  options: { allowUnknownDuration?: boolean } = {},
+) {
   try {
     const metadata = await parseBuffer(buffer, { mimeType });
     const duration = metadata.format.duration;
 
     if (!duration || !Number.isFinite(duration)) {
+      if (options.allowUnknownDuration) {
+        return null;
+      }
       throw new Error("No duration metadata found.");
     }
 
     return duration;
   } catch (error) {
+    if (options.allowUnknownDuration) {
+      return null;
+    }
+
     throw new Error(
       `Unable to read audio duration. Use a standard browser-playable audio file such as WAV, MP3, M4A, OGG, or WebM. ${error instanceof Error ? error.message : ""}`,
     );
