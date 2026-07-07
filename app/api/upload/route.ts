@@ -15,7 +15,7 @@ import type { UploadError } from "@/lib/types";
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
-const MIN_DURATION_SECONDS = 30;
+const MIN_DURATION_SECONDS = 1;
 const MAX_DURATION_SECONDS = 45;
 const MAX_AUDIO_BYTES = 25 * 1024 * 1024;
 

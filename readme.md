@@ -26,8 +26,9 @@ npx vercel deploy --prod --yes
 
 ## Features
 
-- Browser drag-drop audio upload and in-page microphone recording with
-  client-side duration validation.
+- Browser drag-drop audio upload and primary in-page microphone recording with
+  client-side duration validation. Recordings are attached and scored
+  automatically after stopping.
 - `/demo` route that runs real API verification cards using bundled public WAV
   fixtures and live provider calls.
 - Built-in pronunciation correction fixture that intentionally says "box/log"
@@ -108,6 +109,7 @@ public/
   demo-strong-accent.wav
   pronunciation-correction-demo.wav
   test-audio.wav
+  too-short-0-5s.wav
   too-short-10s.wav
   valid-35s.wav
   too-long-60s.wav

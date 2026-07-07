@@ -100,7 +100,7 @@ export async function GET(request: Request) {
       durationFixtures: [
         {
           label: "Too short",
-          path: "/too-short-10s.wav",
+          path: "/too-short-0-5s.wav",
           expectedOutcome: "Rejected by /api/upload",
         },
         {
@@ -513,9 +513,9 @@ async function testDpdpUpload(origin: string): Promise<DemoTestResult> {
 async function testDurationValidation(origin: string): Promise<DemoTestResult> {
   const cases = [
     {
-      fileName: "too-short-10s.wav",
+      fileName: "too-short-0-5s.wav",
       expectedStatus: "rejected",
-      label: "10-second file",
+      label: "0.5-second file",
     },
     {
       fileName: "too-long-60s.wav",

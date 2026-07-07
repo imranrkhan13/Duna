@@ -45,7 +45,7 @@ export function Recorder({
               {isRecording ? "Listening now" : "Record in browser"}
             </p>
             <p className="mt-1 text-sm text-gray-500">
-              Speak naturally for 30-45 seconds. Stop to score automatically.
+              Speak naturally. Stop recording and DUNA scores it automatically.
             </p>
           </div>
         </div>
@@ -115,7 +115,7 @@ export function Recorder({
                 Recorded audio ready
               </p>
               <p className="mt-1 text-xs text-gray-500">
-                Attached automatically and sent for scoring.
+              Attached automatically. Scoring starts as soon as recording stops.
               </p>
             </div>
             <button
@@ -144,7 +144,7 @@ export function Recorder({
         <p className="mt-2 text-sm leading-6 text-gray-500">
           {isRecording
             ? "Capturing audio locally. Transcript appears after secure STT processing."
-            : "Start recording or upload audio to generate a transcript."}
+            : "Start recording to generate a transcript and pronunciation report."}
         </p>
       </div>
     </div>
