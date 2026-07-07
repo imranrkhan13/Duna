@@ -86,24 +86,24 @@ export function TryLiveDemo() {
 
   return (
     <section
-      className="mx-auto w-full max-w-7xl px-5 py-20 sm:px-6 lg:px-8"
+      className="mx-auto w-full max-w-7xl px-4 py-14 sm:px-6 sm:py-20 lg:px-8"
       id="live-demo"
     >
       <div className="mx-auto max-w-3xl text-center">
         <p className="text-xs font-semibold uppercase tracking-[0.22em] text-blue-600">
           Try live demo
         </p>
-        <h2 className="mt-4 text-4xl font-semibold tracking-[-0.055em] text-gray-950 sm:text-6xl">
+        <h2 className="mt-4 text-3xl font-semibold leading-tight tracking-[-0.045em] text-gray-950 sm:text-5xl lg:text-6xl">
           Understand DUNA in under 30 seconds.
         </h2>
-        <p className="mt-4 text-base leading-8 text-gray-500">
+        <p className="mx-auto mt-4 max-w-xl text-sm leading-7 text-gray-500 sm:text-base sm:leading-8">
           Pick a bundled recording, run the pipeline, hear the audio, and see a
           complete pronunciation report without uploading anything.
         </p>
       </div>
 
-      <div className="mt-10 grid gap-5 lg:grid-cols-[0.85fr_1.15fr]">
-        <div className="space-y-3">
+      <div className="mt-8 grid gap-5 sm:mt-10 lg:grid-cols-[0.85fr_1.15fr]">
+        <div className="grid gap-3 sm:grid-cols-2 lg:block lg:space-y-3">
           {bundledDemos.map((demo) => (
             <button
               className={`w-full rounded-3xl border p-4 text-left transition focus:outline-none focus:ring-4 focus:ring-blue-100 ${
@@ -137,7 +137,7 @@ export function TryLiveDemo() {
           ))}
         </div>
 
-        <div className="rounded-[2rem] border border-gray-200 bg-white p-5 shadow-[0_24px_80px_rgba(17,24,39,0.06)]">
+        <div className="rounded-[1.5rem] border border-gray-200 bg-white p-4 shadow-[0_24px_80px_rgba(17,24,39,0.06)] sm:rounded-[2rem] sm:p-5">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-sm font-semibold text-gray-950">
@@ -148,7 +148,7 @@ export function TryLiveDemo() {
               </p>
             </div>
             <button
-              className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-blue-600 px-5 text-sm font-medium text-white shadow-[0_14px_34px_rgba(37,99,235,0.22)] transition hover:-translate-y-0.5 hover:bg-blue-500 disabled:cursor-wait disabled:bg-gray-300"
+              className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-full bg-blue-600 px-5 text-sm font-medium text-white shadow-[0_14px_34px_rgba(37,99,235,0.22)] transition hover:-translate-y-0.5 hover:bg-blue-500 disabled:cursor-wait disabled:bg-gray-300 sm:w-auto"
               disabled={isRunning}
               type="button"
               onClick={() => runDemo()}

@@ -7,22 +7,30 @@ type RecorderProps = {
   state: "idle" | "recording" | "processing";
   seconds: number;
   level: number;
+  audioInputDevices: MediaDeviceInfo[];
+  selectedAudioInputId: string;
   recordedAudioUrl?: string | null;
   isScoring?: boolean;
   onStart: () => void;
   onStop: () => void;
   onDelete: () => void;
+  onDeviceChange: (deviceId: string) => void;
+  onRefreshDevices: () => void;
 };
 
 export function Recorder({
   state,
   seconds,
   level,
+  audioInputDevices,
+  selectedAudioInputId,
   recordedAudioUrl,
   isScoring = false,
   onStart,
   onStop,
   onDelete,
+  onDeviceChange,
+  onRefreshDevices,
 }: RecorderProps) {
   const isRecording = state === "recording";
 
@@ -45,7 +53,8 @@ export function Recorder({
               {isRecording ? "Listening now" : "Record in browser"}
             </p>
             <p className="mt-1 text-sm text-gray-500">
-              Click once, speak naturally, then stop. DUNA scores it automatically.
+              Consent first, then click Start speaking and choose the microphone
+              you want to use.
             </p>
           </div>
         </div>
@@ -70,6 +79,33 @@ export function Recorder({
             {state === "processing" || isScoring ? "Processing" : "Start speaking"}
           </button>
         )}
+      </div>
+
+      <div className="mt-5 grid gap-3 rounded-2xl border border-gray-200 bg-white p-4 sm:grid-cols-[1fr_auto] sm:items-end">
+        <label className="text-sm">
+          <span className="font-medium text-gray-950">Microphone input</span>
+          <select
+            className="mt-2 h-11 w-full rounded-xl border border-gray-200 bg-[#FAFAFA] px-3 text-sm text-gray-700 outline-none transition focus:border-blue-300 focus:ring-4 focus:ring-blue-100"
+            disabled={isRecording || state === "processing"}
+            value={selectedAudioInputId}
+            onChange={(event) => onDeviceChange(event.target.value)}
+          >
+            <option value="">System default microphone</option>
+            {audioInputDevices.map((device, index) => (
+              <option key={`${device.deviceId}-${index}`} value={device.deviceId}>
+                {device.label || `Microphone ${index + 1}`}
+              </option>
+            ))}
+          </select>
+        </label>
+        <button
+          className="h-11 rounded-full border border-gray-200 px-4 text-sm font-medium text-gray-700 transition hover:border-blue-200 hover:text-blue-600"
+          disabled={isRecording || state === "processing"}
+          type="button"
+          onClick={onRefreshDevices}
+        >
+          Refresh mics
+        </button>
       </div>
 
       <div className="mt-5 grid gap-4 lg:grid-cols-[1fr_12rem]">
@@ -144,7 +180,7 @@ export function Recorder({
         <p className="mt-2 text-sm leading-6 text-gray-500">
           {isRecording
             ? "Capturing audio locally. Transcript appears after secure STT processing."
-            : "Start recording to generate a transcript and pronunciation report."}
+            : "Select an external microphone if needed, then start recording to generate a transcript and pronunciation report."}
         </p>
       </div>
     </div>

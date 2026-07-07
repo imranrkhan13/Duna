@@ -30,6 +30,10 @@ export function AudioUploader() {
   >("idle");
   const [recordingSeconds, setRecordingSeconds] = useState(0);
   const [micLevel, setMicLevel] = useState(0);
+  const [audioInputDevices, setAudioInputDevices] = useState<MediaDeviceInfo[]>(
+    [],
+  );
+  const [selectedAudioInputId, setSelectedAudioInputId] = useState("");
   const [recordedAudioUrl, setRecordedAudioUrl] = useState<string | null>(null);
   const [result, setResult] = useState<PronunciationResult | null>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
@@ -45,6 +49,23 @@ export function AudioUploader() {
     () => expectedText.trim().split(/\s+/).filter(Boolean).length,
     [expectedText],
   );
+
+  async function refreshAudioInputDevices() {
+    if (!navigator.mediaDevices?.enumerateDevices) {
+      return;
+    }
+
+    try {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      setAudioInputDevices(
+        devices.filter(
+          (device) => device.kind === "audioinput" && Boolean(device.deviceId),
+        ),
+      );
+    } catch {
+      // Device enumeration can fail before microphone permission is granted.
+    }
+  }
 
   async function handleFile(
     nextFile: File | undefined,
@@ -161,12 +182,21 @@ export function AudioUploader() {
     [recordedAudioUrl],
   );
 
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      void refreshAudioInputDevices();
+    }, 0);
+
+    return () => window.clearTimeout(timer);
+  }, []);
+
   async function startRecording() {
     setError(null);
     setResult(null);
 
     if (!accepted) {
-      setAccepted(true);
+      setError("Please consent first, then click Start speaking again.");
+      return;
     }
 
     if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) {
@@ -175,7 +205,19 @@ export function AudioUploader() {
     }
 
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: selectedAudioInputId
+          ? {
+              deviceId: { exact: selectedAudioInputId },
+              echoCancellation: true,
+              noiseSuppression: true,
+            }
+          : {
+              echoCancellation: true,
+              noiseSuppression: true,
+            },
+      });
+      void refreshAudioInputDevices();
       const mimeType = getPreferredRecordingMimeType();
       const recorder = new MediaRecorder(
         stream,
@@ -393,12 +435,16 @@ export function AudioUploader() {
         >
           <div className="space-y-5">
             <Recorder
+              audioInputDevices={audioInputDevices}
               isScoring={isSubmitting}
               level={micLevel}
               recordedAudioUrl={recordedAudioUrl}
               seconds={recordingSeconds}
+              selectedAudioInputId={selectedAudioInputId}
               state={recordingState}
+              onDeviceChange={setSelectedAudioInputId}
               onDelete={clearRecordedAudio}
+              onRefreshDevices={() => void refreshAudioInputDevices()}
               onStart={() => void startRecording()}
               onStop={stopRecording}
             />
