@@ -18,6 +18,20 @@ export type DemoTestResult = {
 
 export type DemoVerificationResponse = {
   generatedAt: string;
+  demoAssets: {
+    primaryAudio: {
+      label: string;
+      path: string;
+      expectedPassage: string;
+      spokenPhrase: string;
+      purpose: string;
+    };
+    durationFixtures: Array<{
+      label: string;
+      path: string;
+      expectedOutcome: string;
+    }>;
+  };
   apiKeys: DemoApiKeyStatus[];
   summary: {
     total: number;

@@ -43,7 +43,11 @@ Both underscore and prompt-style variable names are supported, for example
 
 The `/demo` route is intentionally not a mock. It calls
 `/api/demo/verify`, which reads bundled spoken WAV fixtures from `public/` and
-runs seven checks:
+runs seven checks. The primary fixture,
+`public/pronunciation-correction-demo.wav`, intentionally says "The quick brown
+box jumps over the lazy log" while the expected passage is "The quick brown fox
+jumps over the lazy dog"; configured STT providers therefore return real
+transcripts that the phoneme/scoring layers can correct and highlight.
 
 1. Gradium STT with automatic Groq fallback.
 2. Direct Groq Whisper.

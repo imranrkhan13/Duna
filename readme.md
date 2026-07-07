@@ -30,6 +30,9 @@ npx vercel deploy --prod --yes
   client-side duration validation.
 - `/demo` route that runs real API verification cards using bundled public WAV
   fixtures and live provider calls.
+- Built-in pronunciation correction fixture that intentionally says "box/log"
+  while the expected passage says "fox/dog", so configured STT providers show
+  real transcripts and the scoring engine highlights pronunciation issues.
 - Server-side audio MIME, size, and 30-45 second duration enforcement.
 - STT provider abstraction with Gradium first and Groq, Deepgram, OpenAI
   fallbacks.
@@ -95,6 +98,7 @@ lib/
   scoring.ts
   stt.ts
 public/
+  pronunciation-correction-demo.wav
   test-audio.wav
   too-short-10s.wav
   valid-35s.wav

@@ -21,7 +21,7 @@ export function Hero() {
         </Reveal>
 
         <Reveal delay={0.08}>
-          <h1 className="mx-auto mt-7 max-w-5xl text-5xl font-semibold tracking-[-0.065em] text-gray-950 sm:text-7xl lg:text-8xl">
+          <h1 className="mx-auto mt-7 max-w-5xl text-4xl font-semibold tracking-[-0.055em] text-gray-950 sm:text-6xl md:text-7xl lg:text-8xl">
             The new standard for AI pronunciation assessment.
           </h1>
         </Reveal>
