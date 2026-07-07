@@ -178,6 +178,21 @@ The learner records or uploads English speech.
 
 ## Step 2
 
+The landing page includes a demo-first product tour using five bundled
+recordings (`demo-excellent.wav`, `demo-good.wav`, `demo-average.wav`,
+`demo-poor.wav`, and `demo-strong-accent.wav`). Those samples are prepackaged so
+users can understand the upload -> speech recognition -> transcript -> phoneme
+alignment -> scoring -> feedback flow immediately without supplying personal
+audio.
+
+The separate `/demo` verification route is intentionally not a mock. It calls
+`/api/demo/verify`, which reads bundled spoken WAV fixtures from `public/` and
+runs seven checks. The primary fixture,
+`public/pronunciation-correction-demo.wav`, intentionally says "The quick brown
+box jumps over the lazy log" while the expected passage is "The quick brown fox
+jumps over the lazy dog"; configured STT providers therefore return real
+transcripts that the phoneme/scoring layers can correct and highlight.
+
 The application validates:
 
 - file format

@@ -11,7 +11,7 @@ export default function DemoPage() {
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-blue-600">
             Live demo
           </p>
-          <h1 className="mt-5 max-w-4xl text-5xl font-semibold tracking-[-0.06em] text-gray-950 sm:text-7xl">
+          <h1 className="mt-5 max-w-4xl text-4xl font-semibold tracking-[-0.055em] text-gray-950 sm:text-6xl lg:text-7xl">
             Verify every API in the pronunciation pipeline.
           </h1>
           <p className="mt-5 max-w-2xl text-base leading-8 text-gray-500">

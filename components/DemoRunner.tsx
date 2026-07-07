@@ -8,6 +8,8 @@ import {
   Clock3,
   KeyRound,
   Loader2,
+  Mic2,
+  Volume2,
   XCircle,
 } from "lucide-react";
 
@@ -126,6 +128,85 @@ export function DemoRunner() {
 
       {report ? (
         <Reveal delay={0.05}>
+        <section className="rounded-[2rem] border border-gray-200 bg-white p-6 shadow-[0_18px_70px_rgba(17,24,39,0.04)]">
+          <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
+            <div>
+              <div className="flex items-center gap-3">
+                <span className="grid h-10 w-10 place-items-center rounded-2xl bg-sky-50 text-sky-600">
+                  <Volume2 className="h-5 w-5" />
+                </span>
+                <div>
+                  <h2 className="text-xl font-semibold tracking-[-0.03em] text-gray-950">
+                    Built-in voice sample
+                  </h2>
+                  <p className="mt-1 text-sm text-gray-500">
+                    Listen to the exact audio sent to each configured STT API.
+                  </p>
+                </div>
+              </div>
+
+              <audio
+                className="mt-5 w-full"
+                controls
+                preload="metadata"
+                src={report.demoAssets.primaryAudio.path}
+              >
+                Your browser does not support audio playback.
+              </audio>
+
+              <p className="mt-4 rounded-2xl border border-gray-200 bg-[#FAFAFA] p-4 text-sm leading-6 text-gray-500">
+                {report.demoAssets.primaryAudio.purpose}
+              </p>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <PhraseCard
+                label="Expected passage"
+                text={report.demoAssets.primaryAudio.expectedPassage}
+              />
+              <PhraseCard
+                label="Spoken in fixture"
+                text={report.demoAssets.primaryAudio.spokenPhrase}
+                tone="warning"
+              />
+            </div>
+          </div>
+        </section>
+        </Reveal>
+      ) : null}
+
+      {report ? (
+        <Reveal delay={0.08}>
+        <section className="rounded-[2rem] border border-gray-200 bg-white p-6 shadow-[0_18px_70px_rgba(17,24,39,0.04)]">
+          <div className="flex items-center gap-3">
+            <span className="grid h-10 w-10 place-items-center rounded-2xl bg-blue-50 text-blue-600">
+              <Mic2 className="h-5 w-5" />
+            </span>
+            <div>
+              <h2 className="text-xl font-semibold tracking-[-0.03em] text-gray-950">
+                Provider transcripts
+              </h2>
+              <p className="mt-1 text-sm text-gray-500">
+                Every configured API receives the same built-in voice sample.
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-5 grid gap-3 lg:grid-cols-3">
+            {report.tests
+              .filter((test) =>
+                ["gradium-stt", "groq-whisper", "deepgram"].includes(test.id),
+              )
+              .map((test) => (
+                <ProviderResult key={test.id} test={test} />
+              ))}
+          </div>
+        </section>
+        </Reveal>
+      ) : null}
+
+      {report ? (
+        <Reveal delay={0.11}>
         <section className="rounded-[2rem] border border-gray-200 bg-white p-6 shadow-[0_18px_70px_rgba(17,24,39,0.04)]">
           <div className="flex items-center gap-3">
             <span className="grid h-10 w-10 place-items-center rounded-2xl bg-blue-50 text-blue-600">
@@ -266,6 +347,69 @@ function DemoCard({ test }: { test: DemoTestResult }) {
         </pre>
       </MotionDiv>
     </details>
+  );
+}
+
+function PhraseCard({
+  label,
+  text,
+  tone = "neutral",
+}: {
+  label: string;
+  text: string;
+  tone?: "neutral" | "warning";
+}) {
+  return (
+    <div
+      className={`rounded-2xl border p-4 ${
+        tone === "warning"
+          ? "border-amber-200 bg-amber-50"
+          : "border-gray-200 bg-[#FAFAFA]"
+      }`}
+    >
+      <p
+        className={`text-xs font-semibold uppercase tracking-[0.16em] ${
+          tone === "warning" ? "text-amber-600" : "text-gray-400"
+        }`}
+      >
+        {label}
+      </p>
+      <p className="mt-3 text-base font-semibold leading-7 tracking-[-0.02em] text-gray-950">
+        {text}
+      </p>
+    </div>
+  );
+}
+
+function ProviderResult({ test }: { test: DemoTestResult }) {
+  const details = test.details as {
+    transcript?: string;
+    attempts?: Array<{ result?: { text?: string }; provider?: string }>;
+    reason?: string;
+  };
+  const transcript =
+    details.transcript ??
+    details.attempts?.find((attempt) => attempt.result?.text)?.result?.text ??
+    details.reason ??
+    "No transcript returned.";
+
+  return (
+    <article className="rounded-2xl border border-gray-200 bg-[#FAFAFA] p-4">
+      <div className="flex items-center justify-between gap-3">
+        <h3 className="text-sm font-semibold text-gray-950">{test.title}</h3>
+        <span
+          className={`rounded-full border px-2.5 py-1 text-[0.68rem] font-semibold uppercase tracking-wide ${STATUS_STYLES[test.status]}`}
+        >
+          {test.status}
+        </span>
+      </div>
+      <p className="mt-3 line-clamp-4 text-sm leading-6 text-gray-600">
+        {transcript}
+      </p>
+      <p className="mt-4 text-xs font-medium text-gray-400">
+        Latency: {test.latencyMs}ms
+      </p>
+    </article>
   );
 }
 

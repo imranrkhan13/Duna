@@ -21,8 +21,10 @@ export const runtime = "nodejs";
 export const maxDuration = 60;
 
 const EXPECTED_PASSAGE = "The quick brown fox jumps over the lazy dog";
+const SPOKEN_CORRECTION_PHRASE = "The quick brown box jumps over the lazy log";
 const VALID_PASSAGE =
   "The quick brown fox jumps over the lazy dog. The careful speaker practices clear English pronunciation with steady rhythm and confident volume.";
+const CORRECTION_AUDIO_FILE = "pronunciation-correction-demo.wav";
 
 type DirectSttResult = {
   provider: string;
@@ -51,7 +53,7 @@ export async function GET(request: Request) {
   const generatedAt = new Date();
   const origin = getOrigin(request);
   const apiKeys = getApiKeyStatuses();
-  const sampleAudio = await readPublicFile("test-audio.wav");
+  const sampleAudio = await readPublicFile(CORRECTION_AUDIO_FILE);
 
   const gradiumPromise = testGradiumWithFallback(sampleAudio);
   const groqPromise = testGroqDirect(sampleAudio);
@@ -86,6 +88,33 @@ export async function GET(request: Request) {
   const skipped = tests.filter((test) => test.status === "skipped").length;
   const response: DemoVerificationResponse = {
     generatedAt: generatedAt.toISOString(),
+    demoAssets: {
+      primaryAudio: {
+        label: "Built-in correction voice sample",
+        path: `/${CORRECTION_AUDIO_FILE}`,
+        expectedPassage: EXPECTED_PASSAGE,
+        spokenPhrase: SPOKEN_CORRECTION_PHRASE,
+        purpose:
+          "This 5-second WAV intentionally says box/log instead of fox/dog so the live STT + phoneme alignment can flag pronunciation issues.",
+      },
+      durationFixtures: [
+        {
+          label: "Too short",
+          path: "/too-short-10s.wav",
+          expectedOutcome: "Rejected by /api/upload",
+        },
+        {
+          label: "Valid duration",
+          path: "/valid-35s.wav",
+          expectedOutcome: "Accepted by /api/upload",
+        },
+        {
+          label: "Too long",
+          path: "/too-long-60s.wav",
+          expectedOutcome: "Rejected by /api/upload",
+        },
+      ],
+    },
     apiKeys,
     summary: {
       total: tests.length,
@@ -156,7 +185,7 @@ async function testGradiumWithFallback(
         title: "Gradium STT Test",
         status: "pass",
         latencyMs: elapsed(started),
-        summary: "Gradium returned a live transcript from public/test-audio.wav.",
+        summary: `Gradium returned a live transcript from public/${CORRECTION_AUDIO_FILE}.`,
         issues: [],
         details: {
           providerUsed: "Gradium STT",
@@ -166,6 +195,10 @@ async function testGradiumWithFallback(
           wordLevelTimestamps: gradium.value.words,
           confidenceScores: collectConfidence(gradium.value),
           rawResponse: gradium.value.raw,
+          correctionTarget: {
+            expectedPassage: EXPECTED_PASSAGE,
+            fixtureSpokenPhrase: SPOKEN_CORRECTION_PHRASE,
+          },
         },
       };
     }
@@ -208,6 +241,10 @@ async function testGradiumWithFallback(
           wordLevelTimestamps: groq.value.words,
           confidenceScores: collectConfidence(groq.value),
           rawResponse: groq.value.raw,
+          correctionTarget: {
+            expectedPassage: EXPECTED_PASSAGE,
+            fixtureSpokenPhrase: SPOKEN_CORRECTION_PHRASE,
+          },
         },
       };
     }
@@ -354,6 +391,7 @@ function testPhonemeAlignment(stt: DirectSttResult | null): DemoTestResult {
     details: {
       expectedPassage: EXPECTED_PASSAGE,
       transcript: stt.text,
+      fixtureSpokenPhrase: SPOKEN_CORRECTION_PHRASE,
       rows,
       flaggedWords,
       expectedPassagePhonemes: tokenizeWords(EXPECTED_PASSAGE).map((word) => ({
@@ -408,6 +446,13 @@ function testScoringEngine(stt: DirectSttResult | null): DemoTestResult {
     details: {
       breakdown: result.breakdown,
       math,
+      correctionTarget: {
+        expectedPassage: EXPECTED_PASSAGE,
+        fixtureSpokenPhrase: SPOKEN_CORRECTION_PHRASE,
+        flaggedWords: result.wordScores.filter(
+          (score) => score.status !== "correct",
+        ),
+      },
       wordScores: result.wordScores,
       feedback: result.feedback,
     },
@@ -602,7 +647,7 @@ async function callGroq(audio: Buffer): Promise<DirectSttResult> {
   formData.append(
     "file",
     new Blob([new Uint8Array(audio)], { type: "audio/wav" }),
-    "test-audio.wav",
+    CORRECTION_AUDIO_FILE,
   );
   formData.append("model", "whisper-large-v3-turbo");
   formData.append("language", "en");

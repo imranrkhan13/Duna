@@ -24,12 +24,12 @@ export function HeroVisualization() {
       <div className="absolute inset-0 -z-10 rounded-[2rem] bg-gradient-to-r from-blue-500/10 via-sky-400/10 to-blue-500/10 blur-3xl" />
       <motion.div
         animate={{ y: [0, -6, 0] }}
-        className="overflow-hidden rounded-[2rem] border border-gray-200 bg-white/90 p-5 shadow-[0_24px_80px_rgba(17,24,39,0.08)] backdrop-blur"
+        className="overflow-hidden rounded-[1.5rem] border border-gray-200 bg-white/90 p-3 shadow-[0_24px_80px_rgba(17,24,39,0.08)] backdrop-blur sm:rounded-[2rem] sm:p-5"
         transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
       >
         <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
-          <div className="rounded-3xl border border-gray-100 bg-[#FAFAFA] p-5">
-            <div className="flex items-center justify-between">
+          <div className="rounded-3xl border border-gray-100 bg-[#FAFAFA] p-4 sm:p-5">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-sm font-medium text-gray-950">
                 Live pronunciation pipeline
               </p>
@@ -38,8 +38,8 @@ export function HeroVisualization() {
               </span>
             </div>
 
-            <div className="mt-6 flex h-28 items-center gap-1 overflow-hidden rounded-2xl bg-white px-4 ring-1 ring-gray-100">
-              {Array.from({ length: 42 }).map((_, index) => (
+            <div className="mt-6 flex h-24 items-center gap-1 overflow-hidden rounded-2xl bg-white px-3 ring-1 ring-gray-100 sm:h-28 sm:px-4">
+              {Array.from({ length: 34 }).map((_, index) => (
                 <motion.span
                   animate={{ height: [`${18 + (index % 6) * 7}px`, `${36 + (index % 8) * 5}px`, `${18 + (index % 6) * 7}px`] }}
                   className="w-1.5 rounded-full bg-gradient-to-t from-blue-600 to-sky-400"
@@ -54,7 +54,7 @@ export function HeroVisualization() {
               ))}
             </div>
 
-            <div className="mt-5 grid gap-3 sm:grid-cols-5">
+            <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-5">
               {flow.map((item, index) => {
                 const Icon = item.icon;
                 return (
@@ -86,7 +86,7 @@ export function HeroVisualization() {
               <CheckCircle2 className="h-5 w-5 text-emerald-400" />
             </div>
             <div className="mt-6">
-              <p className="text-6xl font-semibold tracking-[-0.06em]">92</p>
+              <p className="text-5xl font-semibold tracking-[-0.06em] sm:text-6xl">92</p>
               <p className="mt-1 text-sm text-white/55">Excellent clarity</p>
             </div>
             <div className="mt-7 space-y-3">
