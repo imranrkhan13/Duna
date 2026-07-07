@@ -45,7 +45,7 @@ export function Recorder({
               {isRecording ? "Listening now" : "Record in browser"}
             </p>
             <p className="mt-1 text-sm text-gray-500">
-              Speak naturally. Stop recording and DUNA scores it automatically.
+              Click once, speak naturally, then stop. DUNA scores it automatically.
             </p>
           </div>
         </div>
