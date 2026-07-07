@@ -29,7 +29,8 @@ export function ConsentBanner({
           <p className="mt-2 max-w-3xl text-sm leading-6 text-gray-500">
             {CONSENT_NOTICE} If a cloud speech-to-text provider is configured,
             your audio is transmitted to that provider only to generate the
-            transcript used for this score.
+            transcript used for this score. Consent is required before the
+            microphone can start recording.
           </p>
           </div>
         </div>

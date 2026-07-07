@@ -87,8 +87,3 @@ input {
   position: absolute;
 }
 
-@media (max-width: 639px) {
-  body {
-    padding-bottom: 4.5rem;
-  }
-}

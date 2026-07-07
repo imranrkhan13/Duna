@@ -30,6 +30,10 @@ export function AudioUploader() {
   >("idle");
   const [recordingSeconds, setRecordingSeconds] = useState(0);
   const [micLevel, setMicLevel] = useState(0);
+  const [audioInputDevices, setAudioInputDevices] = useState<MediaDeviceInfo[]>(
+    [],
+  );
+  const [selectedAudioInputId, setSelectedAudioInputId] = useState("");
   const [recordedAudioUrl, setRecordedAudioUrl] = useState<string | null>(null);
   const [result, setResult] = useState<PronunciationResult | null>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
@@ -46,9 +50,26 @@ export function AudioUploader() {
     [expectedText],
   );
 
+  async function refreshAudioInputDevices() {
+    if (!navigator.mediaDevices?.enumerateDevices) {
+      return;
+    }
+
+    try {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      setAudioInputDevices(
+        devices.filter(
+          (device) => device.kind === "audioinput" && Boolean(device.deviceId),
+        ),
+      );
+    } catch {
+      // Device enumeration can fail before microphone permission is granted.
+    }
+  }
+
   async function handleFile(
     nextFile: File | undefined,
-    options: { autoSubmit?: boolean } = {},
+    options: { autoSubmit?: boolean; consented?: boolean } = {},
   ) {
     setError(null);
     setResult(null);
@@ -96,6 +117,13 @@ export function AudioUploader() {
         void submit(nextFile);
       }
     } catch (durationError) {
+      if (options.autoSubmit) {
+        setFile(nextFile);
+        setDuration(null);
+        void submit(nextFile, { consented: options.consented });
+        return;
+      }
+
       setFile(null);
       setDuration(null);
       setError(
@@ -154,12 +182,20 @@ export function AudioUploader() {
     [recordedAudioUrl],
   );
 
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      void refreshAudioInputDevices();
+    }, 0);
+
+    return () => window.clearTimeout(timer);
+  }, []);
+
   async function startRecording() {
     setError(null);
     setResult(null);
 
     if (!accepted) {
-      setError("Please accept the DPDP consent notice before recording.");
+      setError("Please consent first, then click Start speaking again.");
       return;
     }
 
@@ -169,8 +205,24 @@ export function AudioUploader() {
     }
 
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const recorder = new MediaRecorder(stream);
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: selectedAudioInputId
+          ? {
+              deviceId: { exact: selectedAudioInputId },
+              echoCancellation: true,
+              noiseSuppression: true,
+            }
+          : {
+              echoCancellation: true,
+              noiseSuppression: true,
+            },
+      });
+      void refreshAudioInputDevices();
+      const mimeType = getPreferredRecordingMimeType();
+      const recorder = new MediaRecorder(
+        stream,
+        mimeType ? { mimeType } : undefined,
+      );
       const audioContext = new AudioContext();
       const source = audioContext.createMediaStreamSource(stream);
       const analyser = audioContext.createAnalyser();
@@ -204,7 +256,7 @@ export function AudioUploader() {
       recorder.onstop = () => {
         const mimeType = recorder.mimeType || "audio/webm";
         const blob = new Blob(recordingChunksRef.current, { type: mimeType });
-        const recordedFile = new File([blob], `recording-${Date.now()}.webm`, {
+        const recordedFile = new File([blob], `recording-${Date.now()}${extensionForMimeType(mimeType)}`, {
           type: mimeType,
         });
 
@@ -219,7 +271,7 @@ export function AudioUploader() {
           }
           return URL.createObjectURL(recordedFile);
         });
-        void handleFile(recordedFile, { autoSubmit: true });
+        void handleFile(recordedFile, { autoSubmit: true, consented: true });
       };
 
       recorder.start();
@@ -256,12 +308,15 @@ export function AudioUploader() {
     }
   }
 
-  async function submit(fileOverride?: File) {
+  async function submit(
+    fileOverride?: File,
+    options: { consented?: boolean } = {},
+  ) {
     setError(null);
     setResult(null);
     const fileToScore = fileOverride ?? file;
 
-    if (!accepted) {
+    if (!accepted && !options.consented) {
       setError("Please accept the DPDP consent notice before upload.");
       return;
     }
@@ -380,12 +435,16 @@ export function AudioUploader() {
         >
           <div className="space-y-5">
             <Recorder
+              audioInputDevices={audioInputDevices}
               isScoring={isSubmitting}
               level={micLevel}
               recordedAudioUrl={recordedAudioUrl}
               seconds={recordingSeconds}
+              selectedAudioInputId={selectedAudioInputId}
               state={recordingState}
+              onDeviceChange={setSelectedAudioInputId}
               onDelete={clearRecordedAudio}
+              onRefreshDevices={() => void refreshAudioInputDevices()}
               onStart={() => void startRecording()}
               onStop={stopRecording}
             />
@@ -469,4 +528,27 @@ function readBrowserAudioDuration(file: File) {
       reject(new Error("Use a standard browser-playable audio file."));
     };
   });
+}
+
+function getPreferredRecordingMimeType() {
+  const options = [
+    "audio/webm;codecs=opus",
+    "audio/webm",
+    "audio/mp4",
+    "audio/ogg;codecs=opus",
+  ];
+
+  return options.find((mimeType) => MediaRecorder.isTypeSupported(mimeType));
+}
+
+function extensionForMimeType(mimeType: string) {
+  if (mimeType.includes("mp4")) {
+    return ".m4a";
+  }
+
+  if (mimeType.includes("ogg")) {
+    return ".ogg";
+  }
+
+  return ".webm";
 }

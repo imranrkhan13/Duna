@@ -86,13 +86,6 @@ export function Navbar() {
         </div>
       ) : null}
     </header>
-
-    <Link
-      className="fixed bottom-4 left-4 right-4 z-40 inline-flex h-12 items-center justify-center rounded-full bg-blue-600 text-sm font-medium text-white shadow-[0_18px_50px_rgba(37,99,235,0.28)] sm:hidden"
-      href="/#live-demo"
-    >
-      Run Live Demo
-    </Link>
     </>
   );
 }
