@@ -94,7 +94,7 @@ export function TryLiveDemo() {
           Try live demo
         </p>
         <h2 className="mt-4 text-3xl font-semibold leading-tight tracking-[-0.045em] text-gray-950 sm:text-5xl lg:text-6xl">
-          Understand DUNA in under 30 seconds.
+          Understand Voxstep in under 30 seconds.
         </h2>
         <p className="mx-auto mt-4 max-w-xl text-sm leading-7 text-gray-500 sm:text-base sm:leading-8">
           Pick a bundled recording, run the pipeline, hear the audio, and see a
