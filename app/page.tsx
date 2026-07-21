@@ -4,7 +4,6 @@ import { Footer } from "@/components/marketing/Footer";
 import { Hero } from "@/components/marketing/Hero";
 import { Navbar } from "@/components/marketing/Navbar";
 import { StatsGrid } from "@/components/marketing/StatCard";
-import { TrustSection } from "@/components/marketing/TrustSection";
 import { Section } from "@/components/ui/Section";
 
 export default function Home() {
