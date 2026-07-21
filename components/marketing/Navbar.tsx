@@ -8,8 +8,6 @@ const navItems = [
   { label: "Product", href: "/#product" },
   { label: "API", href: "/demo" },
   { label: "Demo", href: "/demo" },
-  { label: "Docs", href: "/#docs" },
-  { label: "Pricing", href: "/#pricing" },
 ];
 
 export function Navbar() {
@@ -29,7 +27,7 @@ export function Navbar() {
           <span className="grid h-7 w-7 place-items-center rounded-lg bg-gray-950 text-xs text-white">
             D
           </span>
-          DUNA
+          Voxstep
         </Link>
 
         <div className="hidden items-center gap-7 text-sm text-gray-500 lg:flex">
